@@ -1,0 +1,31 @@
+Physics MCQ Test
+
+1. What is the SI unit of force?
+A. Joule
+B. Newton
+C. Watt
+D. Pascal
+
+2. Which of the following is an example of Newton's third law?
+A. An apple falling from a tree
+B. A rocket launching upward while exhaust gases push downward
+C. A car slowing down due to friction
+D. A stone thrown horizontally
+
+3. If a wave has a wavelength of 2 meters and a frequency of 5 Hz, what is its wave speed?
+A. 0.4 m/s
+B. 2.5 m/s
+C. 7 m/s
+D. 10 m/s
+
+4. What happens to the electric field inside a conductor in electrostatic equilibrium?
+A. It becomes infinite
+B. It remains constant and nonzero
+C. It is zero
+D. It oscillates
+
+5. Which of the following particles has the smallest mass?
+A. Proton
+B. Neutron
+C. Electron
+D. Alpha particle
