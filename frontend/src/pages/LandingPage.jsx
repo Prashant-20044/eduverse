@@ -26,7 +26,7 @@ import './LandingPage.css';
 function FAQItem({ question, answer }) {
   const [isOpen, setIsOpen] = useState(false);
   return (
-    <div className="border-b border-white/10 py-5">
+    <div className="border-b border-white/10 py-8">
       <button
         className="w-full flex justify-between items-center text-left text-lg md:text-xl font-semibold hover:text-indigo-400 transition-colors focus:outline-none"
         onClick={() => setIsOpen(!isOpen)}
@@ -166,62 +166,7 @@ export default function LandingPage() {
   };
 
   // Mock Data
-  const courses = [
-    {
-      title: "JEE Advanced Physics Complete",
-      mentor: "H.C. Verma (Mock)",
-      duration: "6 Months",
-      students: "1.2K+ Enrolled",
-      category: "Physics",
-      color: "from-purple-500/20 to-indigo-500/20 border-indigo-500/30",
-      badge: "Live Class",
-    },
-    {
-      title: "Organic Chemistry Masterclass",
-      mentor: "Dr. Amit Sharma",
-      duration: "4 Months",
-      students: "850+ Enrolled",
-      category: "Chemistry",
-      color: "from-pink-500/20 to-rose-500/20 border-rose-500/30",
-      badge: "Interactive",
-    },
-    {
-      title: "Calculus & Linear Algebra",
-      mentor: "Prof. Rohan Sen",
-      duration: "5 Months",
-      students: "1.5K+ Enrolled",
-      category: "Maths",
-      color: "from-cyan-500/20 to-blue-500/20 border-cyan-500/30",
-      badge: "Trending",
-    }
-  ];
-
-  const teachers = [
-    {
-      name: "Dr. Amit Sharma",
-      subject: "Chemistry Specialist",
-      bio: "Ex-IIT Faculty with 15+ years mentoring top rankers in JEE & NEET exams.",
-      rating: "4.9",
-      exp: "15+ Yrs Exp",
-      avatar: "🧪",
-    },
-    {
-      name: "H.C. Verma (Mock)",
-      subject: "Physics Legend",
-      bio: "Renowned author and professor, passionate about building deep conceptual foundations.",
-      rating: "5.0",
-      exp: "25+ Yrs Exp",
-      avatar: "🍎",
-    },
-    {
-      name: "Prof. Rohan Sen",
-      subject: "Mathematics Coach",
-      bio: "Olympic Math trainer, specialized in Calculus, Algebra, and Logical reasoning.",
-      rating: "4.8",
-      exp: "12+ Yrs Exp",
-      avatar: "📐",
-    }
-  ];
+  
 
   return (
     <div className="bg-slate-950 text-white min-h-screen font-sans selection:bg-indigo-500 selection:text-white overflow-x-hidden">
@@ -233,24 +178,14 @@ export default function LandingPage() {
             EduVerse
           </a>
 
-          <div className="hidden md:flex gap-8 text-sm font-medium text-gray-300">
-            <a href="#features" className="hover:text-white transition-colors">Features</a>
-            <a href="#courses" className="hover:text-white transition-colors">Courses</a>
-            <a href="#teachers" className="hover:text-white transition-colors">Teachers</a>
-            <a href="#faq" className="hover:text-white transition-colors">FAQ</a>
+          <div className="text-sm md:text-base font-bold tracking-widest text-indigo-300 uppercase">
+           
           </div>
-
-          <button 
-            onClick={() => openAuth('login')}
-            className="bg-white hover:bg-gray-100 text-black px-7 py-3 rounded-2xl font-bold text-base transition-all hover:scale-[1.03] active:scale-[0.97]"
-          >
-            Login
-          </button>
         </div>
       </nav>
 
       {/* Hero Section */}
-      <section className="relative min-h-[90vh] flex items-center justify-center pt-36 pb-32 overflow-hidden">
+      <section className="relative min-h-[90vh] flex items-center justify-center pt-44 pb-44 overflow-hidden">
         
         {/* Dynamic Blobs */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -258,17 +193,18 @@ export default function LandingPage() {
           <div className="absolute h-[600px] w-[600px] bg-cyan-600/15 rounded-full blur-[140px] bottom-5 right-[-150px] animate-pulse duration-[8000ms]" />
         </div>
 
-        <div className="max-w-7xl mx-auto px-6 text-center relative z-10">
+        <div className="max-w-7xl mx-auto px-6 relative z-10 flex flex-col items-center text-center">
           <motion.div
+            className="w-full flex flex-col items-center"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, ease: "easeOut" }}
           >
-            <span className="inline-flex items-center gap-2.5 px-6 py-3 rounded-full bg-white/5 border border-white/10 text-sm md:text-base text-gray-300 backdrop-blur-md">
+            <span className="inline-flex items-center gap-2.5 px-7 py-3.5 rounded-full bg-white/5 border border-white/10 text-sm md:text-base text-gray-300 backdrop-blur-md">
               <Zap size={16} className="text-cyan-400" /> India's Next Generation Learning Platform
             </span>
 
-            <h1 className="text-6xl md:text-9xl font-black mt-12 mb-8 leading-none tracking-tight">
+            <h1 className="text-6xl md:text-9xl font-black mt-16 mb-10 leading-none tracking-tight">
               Learn.
               <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">
                 {" "}Teach.
@@ -276,132 +212,178 @@ export default function LandingPage() {
               {" "}Grow.
             </h1>
 
-            <p className="text-gray-300 mt-8 mb-14 text-xl md:text-2xl max-w-4xl mx-auto leading-relaxed">
+            <p className="text-gray-300 mt-10 mb-20 text-xl md:text-2xl max-w-4xl text-center leading-relaxed">
               A comprehensive live stream learning environment. Connect with top educators, practice with interactive testing, and launch your career.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
-              <button 
-                onClick={() => openAuth('login', 'student')}
-                className="w-full sm:w-auto bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 px-12 py-5.5 rounded-2xl font-extrabold text-white text-lg shadow-xl shadow-indigo-500/25 transition-all hover:scale-[1.04] active:scale-[0.96]"
-              >
-                Login as Student
-              </button>
+            <div className="flex flex-col sm:flex-row gap-10 justify-center items-center">
+              
+              {/* Student button */}
+              <div className="button-container">
+                <button 
+                  onClick={() => openAuth('login', 'student')}
+                  className="real-button"
+                />
+                <div className="button-border">
+                  <div className="button font-extrabold text-lg text-white">
+                    Login as Student
+                    <div className="backdrop"></div>
+                    <div className="spin spin-blur"></div>
+                    <div className="spin spin-intense"></div>
+                    <div className="spin spin-inside"></div>
+                  </div>
+                </div>
+              </div>
 
-              <button 
-                onClick={() => openAuth('login', 'teacher')}
-                className="w-full sm:w-auto border border-white/20 hover:bg-white/5 hover:border-white/40 px-12 py-5.5 rounded-2xl font-bold text-white text-lg transition-all hover:scale-[1.04] active:scale-[0.96]"
-              >
-                Login as Teacher
-              </button>
+              {/* Teacher button */}
+              <div className="button-container">
+                <button 
+                  onClick={() => openAuth('login', 'teacher')}
+                  className="real-button"
+                />
+                <div className="button-border">
+                  <div className="button font-bold text-lg text-white">
+                    Login as Teacher
+                    <div className="backdrop"></div>
+                    <div className="spin spin-blur"></div>
+                    <div className="spin spin-intense"></div>
+                    <div className="spin spin-inside"></div>
+                  </div>
+                </div>
+              </div>
+
             </div>
           </motion.div>
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="py-28 bg-slate-950 border-y border-white/5">
-        <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 px-6">
-          {[
-            ["50K+", "Students"],
-            ["2K+", "Teachers"],
-            ["10K+", "Courses"],
-            ["1M+", "Hours Learned"],
-          ].map(([value, label], index) => (
-            <motion.div
-              key={label}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.1, duration: 0.5 }}
-              className="bg-white/5 backdrop-blur-xl rounded-3xl p-8 md:p-10 text-center border border-white/10 hover:border-white/20 transition-colors"
-            >
-              <h2 className="text-4xl md:text-6xl font-black bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">{value}</h2>
-              <p className="text-gray-400 mt-3 font-semibold text-sm md:text-base tracking-wide uppercase">{label}</p>
-            </motion.div>
-          ))}
-        </div>
-      </section>
+      
 
       {/* Student / Teacher Info Cards */}
-      <section className="py-44 px-6 relative">
-        <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-14">
-          
-          {/* Student Card */}
-          <motion.div 
-            initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
+      <section className="py-56 px-8 relative flex flex-col items-center">
+
+        {/* Section heading — centred */}
+        <div className="w-full max-w-4xl mx-auto text-center mb-20">
+          <motion.div
+            className="w-full flex flex-col items-center"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="group bg-gradient-to-br from-indigo-900/10 via-indigo-950/20 to-slate-900 border border-indigo-500/20 rounded-3xl p-10 md:p-14 hover:border-indigo-500/40 transition-all flex flex-col justify-between"
           >
-            <div>
-              <div className="w-20 h-20 rounded-3xl bg-indigo-500/10 border border-indigo-500/25 flex items-center justify-center text-indigo-400 group-hover:scale-110 transition-transform">
-                <GraduationCap size={40} />
+            <span className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white/5 border border-white/10 text-sm text-gray-400 mb-6">
+              <GraduationCap size={15} className="text-indigo-400" /> Who is EduVerse for?
+            </span>
+            <h2 className="text-4xl md:text-6xl font-black tracking-tight">
+              Built for{' '}
+              <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">
+                Everyone
+              </span>
+            </h2>
+            <p className="text-gray-400 mt-6 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
+              Whether you're here to learn or to teach, EduVerse gives you everything you need to succeed.
+            </p>
+          </motion.div>
+        </div>
+
+        {/* Cards grid */}
+        <div className="w-full max-w-7xl mx-auto grid md:grid-cols-2 gap-10 items-stretch">
+
+          {/* Student Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.05 }}
+            className="group bg-gradient-to-br from-indigo-900/10 via-indigo-950/20 to-slate-900 border border-indigo-500/20 rounded-[32px] py-20 px-14 md:py-28 md:px-20 hover:border-indigo-500/40 transition-all flex flex-col items-start text-left"
+          >
+            {/* Icon + Title row */}
+            <div className="flex items-center gap-6 mb-10">
+              <div className="w-28 h-28 rounded-3xl bg-indigo-500/10 border border-indigo-500/25 flex items-center justify-center text-indigo-400 group-hover:scale-110 transition-transform flex-shrink-0">
+                <GraduationCap size={52} />
               </div>
-              <h3 className="text-4xl font-extrabold mt-10">For Students</h3>
-              <p className="text-gray-400 mt-4 text-lg">Unleash your potential with conceptual live learning paths and real-time validation.</p>
-              
-              <ul className="mt-10 space-y-5">
-                {[
-                  "Interactive Live Classrooms",
-                  "Comprehensive Practice Mock Tests",
-                  "AI-driven Learning paths & analytics",
-                  "Verified Certifications for career milestones"
-                ].map((item) => (
-                  <li key={item} className="flex items-center gap-4 text-gray-300 text-base md:text-lg">
-                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center">
-                      <Check size={14} className="text-indigo-400" />
-                    </span>
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
+              <h3 className="text-5xl font-extrabold">For Students</h3>
             </div>
 
-            <button 
+            {/* Subtitle */}
+            <p className="text-gray-400 mt-8 text-xl leading-relaxed">
+              Unleash your potential with conceptual live learning paths and real-time validation.
+            </p>
+
+            {/* Divider */}
+            <div className="w-20 h-px bg-indigo-500/30 my-10" />
+
+            {/* Feature list */}
+            <ul className="space-y-7 w-full">
+              {[
+                "Interactive Live Classrooms",
+                "Comprehensive Practice Mock Tests",
+                "AI-driven Learning paths & analytics",
+                "Verified Certifications for career milestones",
+              ].map((item) => (
+                <li key={item} className="flex items-center gap-5 text-gray-300 text-lg">
+                  <span className="flex-shrink-0 w-7 h-7 rounded-full bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center">
+                    <Check size={15} className="text-indigo-400" />
+                  </span>
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+
+            {/* CTA */}
+            <button
               onClick={() => openAuth('signup', 'student')}
-              className="mt-12 inline-flex items-center justify-center gap-3 bg-indigo-600/10 hover:bg-indigo-600/20 border border-indigo-500/30 text-indigo-300 hover:text-white px-8 py-4.5 rounded-2xl font-extrabold text-base transition-all hover:scale-[1.03] active:scale-[0.97] focus:outline-none w-full sm:w-fit"
+              className="mt-14 inline-flex items-center justify-center gap-5 bg-indigo-600/10 hover:bg-indigo-600/20 border border-indigo-500/30 text-indigo-300 hover:text-white px-16 py-6 rounded-2xl font-extrabold text-xl tracking-wide transition-all hover:scale-[1.03] active:scale-[0.97] focus:outline-none w-fit self-center"
             >
               Start Learning <ChevronRight size={18} className="group-hover:translate-x-1.5 transition-transform" />
             </button>
           </motion.div>
 
           {/* Teacher Card */}
-          <motion.div 
-            initial={{ opacity: 0, x: 30 }}
-            whileInView={{ opacity: 1, x: 0 }}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="group bg-gradient-to-br from-cyan-900/10 via-cyan-950/20 to-slate-900 border border-cyan-500/20 rounded-3xl p-10 md:p-14 hover:border-cyan-500/40 transition-all flex flex-col justify-between"
+            transition={{ duration: 0.6, delay: 0.15 }}
+            className="group bg-gradient-to-br from-cyan-900/10 via-cyan-950/20 to-slate-900 border border-cyan-500/20 rounded-[32px] py-20 px-14 md:py-28 md:px-20 hover:border-cyan-500/40 transition-all flex flex-col items-start text-left"
           >
-            <div>
-              <div className="w-20 h-20 rounded-3xl bg-cyan-500/10 border border-cyan-500/25 flex items-center justify-center text-cyan-400 group-hover:scale-110 transition-transform">
-                <Users size={40} />
+            {/* Icon + Title row */}
+            <div className="flex items-center gap-6 mb-10">
+              <div className="w-28 h-28 rounded-3xl bg-cyan-500/10 border border-cyan-500/25 flex items-center justify-center text-cyan-400 group-hover:scale-110 transition-transform flex-shrink-0">
+                <Users size={52} />
               </div>
-              <h3 className="text-4xl font-extrabold mt-10">For Teachers</h3>
-              <p className="text-gray-400 mt-4 text-lg">Build your digital academy, expand your reach across the nation, and earn doing what you love.</p>
-              
-              <ul className="mt-10 space-y-5">
-                {[
-                  "Structured Multi-chapter Course Creator",
-                  "Broadcast Live to 1000+ students instantly",
-                  "Fair Revenue Sharing & Instant Payouts",
-                  "Granular attendance and performance analytics"
-                ].map((item) => (
-                  <li key={item} className="flex items-center gap-4 text-gray-300 text-base md:text-lg">
-                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center">
-                      <Check size={14} className="text-cyan-400" />
-                    </span>
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
+              <h3 className="text-5xl font-extrabold">For Teachers</h3>
             </div>
 
-            <button 
+            {/* Subtitle */}
+            <p className="text-gray-400 mt-8 text-xl leading-relaxed">
+              Build your digital academy, expand your reach across the nation, and earn doing what you love.
+            </p>
+
+            {/* Divider */}
+            <div className="w-20 h-px bg-cyan-500/30 my-10" />
+
+            {/* Feature list */}
+            <ul className="space-y-7 w-full">
+              {[
+                "Structured Multi-chapter Course Creator",
+                "Broadcast Live to 1000+ students instantly",
+                "Fair Revenue Sharing & Instant Payouts",
+                "Granular attendance and performance analytics",
+              ].map((item) => (
+                <li key={item} className="flex items-center gap-5 text-gray-300 text-lg">
+                  <span className="flex-shrink-0 w-7 h-7 rounded-full bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center">
+                    <Check size={15} className="text-cyan-400" />
+                  </span>
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+
+            {/* CTA */}
+            <button
               onClick={() => openAuth('signup', 'teacher')}
-              className="mt-12 inline-flex items-center justify-center gap-3 bg-cyan-600/10 hover:bg-cyan-600/20 border border-cyan-500/30 text-cyan-300 hover:text-white px-8 py-4.5 rounded-2xl font-extrabold text-base transition-all hover:scale-[1.03] active:scale-[0.97] focus:outline-none w-full sm:w-fit"
+              className="mt-14 inline-flex items-center justify-center gap-5 bg-cyan-600/10 hover:bg-cyan-600/20 border border-cyan-500/30 text-cyan-300 hover:text-white px-16 py-6 rounded-2xl font-extrabold text-xl tracking-wide transition-all hover:scale-[1.03] active:scale-[0.97] focus:outline-none w-fit self-center"
             >
               Start Teaching <ChevronRight size={18} className="group-hover:translate-x-1.5 transition-transform" />
             </button>
@@ -410,209 +392,70 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Courses Section */}
-      <section className="py-44 bg-slate-950/50" id="courses">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center max-w-3xl mx-auto">
-            <h2 className="text-4xl md:text-5xl font-black tracking-tight">Explore Popular Live Courses</h2>
-            <p className="text-gray-400 mt-5 text-lg md:text-xl">Gain top conceptual knowledge in physics, chemistry, and mathematics with leading coaches.</p>
-          </div>
+      {/* Spacer to guarantee gap */}
+      <div className="h-[200px] w-full"></div>
 
-          <div className="grid md:grid-cols-3 gap-10 mt-24">
-            {courses.map((course, index) => (
-              <motion.div
-                key={course.title}
-                initial={{ opacity: 0, y: 25 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.15, duration: 0.5 }}
-                className={`group bg-gradient-to-b ${course.color} border rounded-3xl p-8 hover:scale-[1.02] hover:border-white/20 transition-all duration-300 flex flex-col justify-between`}
-              >
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="bg-white/10 px-3 py-1 rounded-full text-xs font-semibold text-white tracking-wide">{course.category}</span>
-                    <span className="flex items-center gap-1.5 text-xs text-green-400 font-bold bg-green-500/10 border border-green-500/20 px-2.5 py-1 rounded-full">
-                      <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
-                      {course.badge}
-                    </span>
-                  </div>
-                  <h3 className="text-2xl font-bold mt-2 group-hover:text-indigo-400 transition-colors">{course.title}</h3>
-                  <p className="text-gray-400 mt-2 text-sm">Instructor: <span className="text-white font-medium">{course.mentor}</span></p>
-                </div>
-
-                <div className="mt-8 pt-6 border-t border-white/5 flex items-center justify-between">
-                  <div className="flex items-center gap-4 text-xs text-gray-400">
-                    <span className="flex items-center gap-1"><Calendar size={13} /> {course.duration}</span>
-                    <span className="flex items-center gap-1"><Users size={13} /> {course.students}</span>
-                  </div>
-                  <button 
-                    onClick={() => openAuth('signup', 'student')}
-                    className="w-9 h-9 rounded-full bg-white text-black flex items-center justify-center hover:bg-indigo-400 hover:text-white transition-colors focus:outline-none"
-                  >
-                    <ArrowRight size={16} />
-                  </button>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section className="py-44" id="features">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center max-w-3xl mx-auto">
-            <h2 className="text-4xl md:text-5xl font-black tracking-tight">Why Choose EduVerse?</h2>
-            <p className="text-gray-400 mt-5 text-lg md:text-xl">Unleashing digital tools configured specifically to help learners and teachers succeed together.</p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-10 mt-24">
-            {[
-              {
-                icon: <BookOpen className="text-indigo-400" size={28} />,
-                title: "Interactive Learning",
-                desc: "Equipped with live chat, query raise features, collaborative whiteboards, and class polls to make lectures engaging.",
-              },
-              {
-                icon: <Award className="text-pink-400" size={28} />,
-                title: "Industry Certifications",
-                desc: "Pass mock examinations, finish lecture paths, and download industry-recognized credentials signed by top coaches.",
-              },
-              {
-                icon: <PlayCircle className="text-cyan-400" size={28} />,
-                title: "Live Classes",
-                desc: "Experience ultra low latency video stream, clear audio, screen sharing capabilities, and instant class recording archives.",
-              },
-            ].map((item, index) => (
-              <motion.div
-                key={item.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1, duration: 0.5 }}
-                className="bg-white/5 hover:bg-white/10 rounded-3xl p-10 border border-white/10 hover:border-white/20 transition-all group duration-300"
-              >
-                <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                  {item.icon}
-                </div>
-                <h3 className="text-2xl font-bold mt-6 group-hover:text-white transition-colors">{item.title}</h3>
-                <p className="text-gray-400 mt-3 text-sm leading-relaxed">{item.desc}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Teachers Showcase Section */}
-      <section className="py-44 bg-slate-950/50" id="teachers">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center max-w-3xl mx-auto">
-            <h2 className="text-4xl md:text-5xl font-black tracking-tight">Meet Our Master Instructors</h2>
-            <p className="text-gray-400 mt-5 text-lg md:text-xl">Learn directly from legends who have helped thousands of students clear the toughest entrance exams.</p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-10 mt-24">
-            {teachers.map((teacher, index) => (
-              <motion.div
-                key={teacher.name}
-                initial={{ opacity: 0, y: 25 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.15, duration: 0.5 }}
-                className="bg-slate-900/40 border border-white/5 rounded-3xl p-10 hover:border-white/15 hover:bg-slate-900/60 transition-all flex flex-col justify-between"
-              >
-                <div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-4xl">{teacher.avatar}</span>
-                    <div className="flex items-center gap-1 text-amber-400 bg-amber-400/10 border border-amber-400/20 px-2.5 py-0.5 rounded-full text-xs font-bold">
-                      <Star size={12} fill="currentColor" />
-                      {teacher.rating}
-                    </div>
-                  </div>
-                  <h3 className="text-2xl font-bold mt-6">{teacher.name}</h3>
-                  <p className="text-indigo-400 text-sm font-semibold mt-1">{teacher.subject}</p>
-                  <p className="text-gray-400 text-sm mt-4 leading-relaxed">{teacher.bio}</p>
-                </div>
-                
-                <div className="mt-8 pt-6 border-t border-white/5 flex items-center justify-between">
-                  <span className="text-xs text-gray-500 font-medium">{teacher.exp}</span>
-                  <button 
-                    onClick={() => openAuth('signup', 'student')}
-                    className="text-xs font-semibold text-white bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl border border-white/10 transition-all focus:outline-none"
-                  >
-                    View Courses
-                  </button>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* FAQ Section */}
-      <section className="py-44" id="faq">
-        <div className="max-w-4xl mx-auto px-6">
-          <div className="text-center mb-20">
-            <h2 className="text-4xl md:text-5xl font-black tracking-tight">Frequently Asked Questions</h2>
-            <p className="text-gray-400 mt-5 text-lg md:text-xl">Find answers to basic questions regarding how virtual classrooms function.</p>
-          </div>
-
-          <div className="bg-slate-900/30 border border-white/5 rounded-[32px] p-8 md:p-14 backdrop-blur-md">
-            <FAQItem 
-              question="What is EduVerse?" 
-              answer="EduVerse is India's next-generation learning platform built on a low-latency live streaming network. We connect passionate teachers with eager students to facilitate high-quality real-time lectures, tests, and conceptual growth."
-            />
-            <FAQItem 
-              question="How do live classes work?" 
-              answer="Once you enroll in a course and the coach starts the session, you join a real-time stream. You can interact via chat, participate in polls, look at the collaborative whiteboard, and ask questions directly. A recorded video of the lecture becomes instantly archived in your dashboard."
-            />
-            <FAQItem 
-              question="Can I teach on EduVerse?" 
-              answer="Yes! By signing up as a teacher, you can build your profile, structure courses, set your price, go live instantly, host mock tests, and keep track of your analytics and earnings via our customizable dashboard."
-            />
-            <FAQItem 
-              question="Are the mock tests customizable?" 
-              answer="Absolutely. Teachers can generate multi-choice questions (MCQs), schedule time limits, and students can join rooms to submit their answers. Scoring is instant and detailed solutions are unlocked once the test is finished."
-            />
-          </div>
-        </div>
-      </section>
 
       {/* CTA Section */}
-      <section className="py-44 relative">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="relative overflow-hidden rounded-[48px] bg-gradient-to-r from-indigo-700 via-purple-700 to-cyan-700 p-14 md:p-24 text-center shadow-2xl">
+      <section className="mt-[200px] pb-56 relative w-full">
+        <div className="max-w-[1400px] mx-auto px-6">
+          <div className="relative overflow-hidden rounded-[48px] bg-gradient-to-r from-indigo-700 via-purple-700 to-cyan-700 px-16 py-24 md:px-28 md:py-40 min-h-[600px] md:min-h-[800px] flex flex-col items-center justify-center text-center shadow-2xl">
             {/* CTA Background decorative shapes */}
             <div className="absolute top-[-50px] left-[-50px] w-64 h-64 bg-white/5 rounded-full blur-2xl pointer-events-none" />
             <div className="absolute bottom-[-50px] right-[-50px] w-64 h-64 bg-white/5 rounded-full blur-2xl pointer-events-none" />
 
-            <h2 className="text-4xl md:text-7xl font-black tracking-tight leading-none mb-4">Ready To Start Your Journey?</h2>
-            <p className="mt-8 text-lg md:text-xl text-white/80 max-w-3xl mx-auto leading-relaxed">
+            <h2 className="text-4xl md:text-6xl lg:text-7xl font-black tracking-tight leading-tight mb-8">
+              Ready To Start Your Journey?
+            </h2>
+            
+            <p className="text-lg md:text-xl text-white/90 max-w-2xl leading-relaxed mb-14">
               Join thousands of learners mastering complicated topics and experienced educators scaling their classrooms digitally.
             </p>
 
-            <div className="mt-14 flex flex-col sm:flex-row justify-center items-center gap-6">
-              <button 
-                onClick={() => openAuth('signup', 'student')}
-                className="w-full sm:w-auto bg-white hover:bg-gray-100 text-black px-12 py-5.5 rounded-2xl font-extrabold shadow-xl hover:scale-[1.03] active:scale-[0.97] transition-all text-lg"
-              >
-                Student Sign Up
-              </button>
+            <div className="flex flex-col sm:flex-row justify-center items-center gap-8 md:gap-12 w-full">
+              
+              {/* Student CTA */}
+              <div className="button-container">
+                <button 
+                  onClick={() => openAuth('signup', 'student')}
+                  className="real-button"
+                />
+                <div className="button-border">
+                  <div className="button font-extrabold text-lg text-white">
+                    Student Sign Up
+                    <div className="backdrop"></div>
+                    <div className="spin spin-blur"></div>
+                    <div className="spin spin-intense"></div>
+                    <div className="spin spin-inside"></div>
+                  </div>
+                </div>
+              </div>
 
-              <button 
-                onClick={() => openAuth('signup', 'teacher')}
-                className="w-full sm:w-auto border border-white hover:bg-white/10 text-white px-12 py-5.5 rounded-2xl font-bold hover:scale-[1.03] active:scale-[0.97] transition-all text-lg"
-              >
-                Teacher Sign Up
-              </button>
+              {/* Teacher CTA */}
+              <div className="button-container">
+                <button 
+                  onClick={() => openAuth('signup', 'teacher')}
+                  className="real-button"
+                />
+                <div className="button-border">
+                  <div className="button font-bold text-lg text-white">
+                    Teacher Sign Up
+                    <div className="backdrop"></div>
+                    <div className="spin spin-blur"></div>
+                    <div className="spin spin-intense"></div>
+                    <div className="spin spin-inside"></div>
+                  </div>
+                </div>
+              </div>
+
             </div>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-white/5 py-12 text-center text-sm text-gray-500 bg-slate-950">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4">
+      <footer className="border-t border-white/5 py-20 text-center text-sm text-gray-500 bg-slate-950">
+        <div className="max-w-7xl mx-auto px-8 flex flex-col md:flex-row justify-between items-center gap-6">
           <span className="font-bold text-lg text-white">EduVerse</span>
           <span>© 2026 EduVerse. All rights reserved.</span>
           <div className="flex gap-6 text-xs text-gray-400">
@@ -630,7 +473,13 @@ export default function LandingPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md"
+            style={{
+              position: 'fixed', inset: 0, zIndex: 50,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              padding: '16px',
+              background: 'rgba(0,0,0,0.75)',
+              backdropFilter: 'blur(12px)',
+            }}
             onClick={() => setIsAuthModalOpen(false)}
           >
             <motion.div
@@ -638,140 +487,151 @@ export default function LandingPage() {
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
               transition={{ type: "spring", duration: 0.5 }}
-              className="relative w-full max-w-md overflow-hidden bg-slate-900 border border-white/10 rounded-3xl p-8 shadow-2xl"
+              style={{
+                position: 'relative', width: '100%', maxWidth: '480px',
+                background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: '28px',
+                padding: '40px 36px',
+                boxShadow: '0 25px 60px rgba(0,0,0,0.5)',
+                overflow: 'hidden',
+              }}
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Blobs in modal */}
-              <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
-              <div className="absolute bottom-0 left-0 w-32 h-32 bg-cyan-500/10 rounded-full blur-2xl pointer-events-none" />
+              {/* Decorative blobs */}
+              <div style={{ position:'absolute', top:0, right:0, width:160, height:160, background:'radial-gradient(circle, rgba(99,102,241,0.15), transparent)', borderRadius:'50%', pointerEvents:'none' }} />
+              <div style={{ position:'absolute', bottom:0, left:0, width:160, height:160, background:'radial-gradient(circle, rgba(6,182,212,0.12), transparent)', borderRadius:'50%', pointerEvents:'none' }} />
 
+              {/* Close button */}
               <button
                 onClick={() => setIsAuthModalOpen(false)}
-                className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors focus:outline-none"
+                style={{ position:'absolute', top:20, right:20, background:'none', border:'none', color:'#9ca3af', cursor:'pointer', padding:6, borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center' }}
               >
-                <X size={20} />
+                <X size={22} />
               </button>
 
-              <h2 className="text-3xl font-extrabold bg-gradient-to-r from-indigo-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent text-center mb-1">
-                {activeTab === 'login' ? 'Welcome Back' : 'Join EduVerse'}
-              </h2>
-              <p className="text-gray-400 text-center text-xs mb-6">
-                {activeTab === 'login' 
-                  ? 'Access your lessons and custom workspaces' 
-                  : 'Start learning or build your custom class brand'}
-              </p>
+              {/* Header icon */}
+              <div style={{ display:'flex', flexDirection:'column', alignItems:'center', marginBottom:24 }}>
+                <div style={{ width:56, height:56, borderRadius:16, background:'linear-gradient(135deg, #6366f1, #06b6d4)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:24, marginBottom:16, boxShadow:'0 8px 24px rgba(99,102,241,0.35)' }}>
+                  🎓
+                </div>
+                <h2 style={{ margin:0, fontSize:28, fontWeight:900, background:'linear-gradient(90deg, #818cf8, #a78bfa, #67e8f9)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', textAlign:'center' }}>
+                  {activeTab === 'login' ? 'Welcome Back' : 'Join EduVerse'}
+                </h2>
+                <p style={{ margin:'8px 0 0', color:'#94a3b8', fontSize:14, textAlign:'center' }}>
+                  {activeTab === 'login' ? 'Sign in to continue your journey' : 'Start learning or teaching today'}
+                </p>
+              </div>
 
-              {/* Tab Toggles */}
-              <div className="flex bg-slate-950 p-1 rounded-xl border border-white/5 mb-6">
+              {/* Google Buttons */}
+              <div style={{ display:'flex', flexDirection:'column', gap:12, marginBottom:24 }}>
                 <button
-                  className={`flex-1 py-2 text-center text-sm font-semibold rounded-lg transition-all focus:outline-none ${
-                    activeTab === 'login' 
-                      ? 'bg-gradient-to-r from-indigo-600 to-cyan-600 text-white shadow-md' 
-                      : 'text-gray-400 hover:text-white'
-                  }`}
-                  onClick={() => { setActiveTab('login'); setAuthError(''); }}
+                  type="button"
+                  onClick={() => handleGoogleLoginClick('student')}
                   disabled={submitting || loadingRole !== null}
+                  style={{ width:'100%', display:'flex', alignItems:'center', justifyContent:'center', gap:12, background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.1)', borderRadius:14, padding:'14px 20px', color:'white', fontWeight:700, fontSize:15, cursor:'pointer', transition:'background 0.2s' }}
+                  onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,0.1)'}
+                  onMouseLeave={e => e.currentTarget.style.background='rgba(255,255,255,0.05)'}
                 >
-                  Login
+                  <span style={{ fontSize:20 }}>👩‍🎓</span>
+                  <span>{loadingRole === 'student' ? 'Connecting...' : 'Student Google Login'}</span>
                 </button>
                 <button
-                  className={`flex-1 py-2 text-center text-sm font-semibold rounded-lg transition-all focus:outline-none ${
-                    activeTab === 'signup' 
-                      ? 'bg-gradient-to-r from-indigo-600 to-cyan-600 text-white shadow-md' 
-                      : 'text-gray-400 hover:text-white'
-                  }`}
-                  onClick={() => { setActiveTab('signup'); setAuthError(''); }}
+                  type="button"
+                  onClick={() => handleGoogleLoginClick('teacher')}
                   disabled={submitting || loadingRole !== null}
+                  style={{ width:'100%', display:'flex', alignItems:'center', justifyContent:'center', gap:12, background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.1)', borderRadius:14, padding:'14px 20px', color:'white', fontWeight:700, fontSize:15, cursor:'pointer', transition:'background 0.2s' }}
+                  onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,0.1)'}
+                  onMouseLeave={e => e.currentTarget.style.background='rgba(255,255,255,0.05)'}
                 >
-                  Sign Up
+                  <span style={{ fontSize:20 }}>👨‍🏫</span>
+                  <span>{loadingRole === 'teacher' ? 'Connecting...' : 'Teacher Google Login'}</span>
                 </button>
               </div>
 
+              {/* OR Divider */}
+              <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:24 }}>
+                <span style={{ flex:1, height:1, background:'rgba(255,255,255,0.08)' }} />
+                <span style={{ color:'#64748b', fontSize:12, fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase' }}>or continue with email</span>
+                <span style={{ flex:1, height:1, background:'rgba(255,255,255,0.08)' }} />
+              </div>
+
+              {/* Error */}
               {authError && (
-                <div className="bg-red-500/15 border border-red-500/30 text-red-400 text-xs rounded-xl p-3 mb-4 text-left">
+                <div style={{ background:'rgba(239,68,68,0.1)', border:'1px solid rgba(239,68,68,0.3)', color:'#f87171', fontSize:13, borderRadius:10, padding:'12px 16px', marginBottom:20 }}>
                   {authError}
                 </div>
               )}
 
-              {/* Credentials Form */}
-              <form onSubmit={handleCustomSubmit} className="space-y-4 text-left">
+              {/* Form */}
+              <form onSubmit={handleCustomSubmit} style={{ display:'flex', flexDirection:'column', gap:16 }}>
                 {activeTab === 'signup' && (
                   <div>
-                    <label htmlFor="modal-name" className="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">
-                      Full Name
-                    </label>
+                    <label style={{ display:'block', fontSize:11, fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase', color:'#94a3b8', marginBottom:8 }}>Full Name</label>
                     <input
                       id="modal-name"
                       type="text"
-                      className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-indigo-500 transition-colors"
                       placeholder="John Doe"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       disabled={submitting || loadingRole !== null}
                       required
+                      style={{ width:'100%', background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.1)', borderRadius:12, padding:'14px 16px', color:'white', fontSize:15, outline:'none', boxSizing:'border-box' }}
+                      onFocus={e => e.target.style.borderColor='#6366f1'}
+                      onBlur={e => e.target.style.borderColor='rgba(255,255,255,0.1)'}
                     />
                   </div>
                 )}
 
                 <div>
-                  <label htmlFor="modal-email" className="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">
-                    Email Address
-                  </label>
+                  <label style={{ display:'block', fontSize:11, fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase', color:'#94a3b8', marginBottom:8 }}>Email Address</label>
                   <input
                     id="modal-email"
                     type="email"
-                    className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-indigo-500 transition-colors"
                     placeholder="you@example.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     disabled={submitting || loadingRole !== null}
                     required
+                    style={{ width:'100%', background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.1)', borderRadius:12, padding:'14px 16px', color:'white', fontSize:15, outline:'none', boxSizing:'border-box' }}
+                    onFocus={e => e.target.style.borderColor='#6366f1'}
+                    onBlur={e => e.target.style.borderColor='rgba(255,255,255,0.1)'}
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="modal-password" className="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">
-                    Password
-                  </label>
+                  <label style={{ display:'block', fontSize:11, fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase', color:'#94a3b8', marginBottom:8 }}>Password</label>
                   <input
                     id="modal-password"
                     type="password"
-                    className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-indigo-500 transition-colors"
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     disabled={submitting || loadingRole !== null}
                     required
+                    style={{ width:'100%', background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.1)', borderRadius:12, padding:'14px 16px', color:'white', fontSize:15, outline:'none', boxSizing:'border-box' }}
+                    onFocus={e => e.target.style.borderColor='#6366f1'}
+                    onBlur={e => e.target.style.borderColor='rgba(255,255,255,0.1)'}
                   />
                 </div>
 
                 {activeTab === 'signup' && (
                   <div>
-                    <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">
-                      Register As
-                    </label>
-                    <div className="grid grid-cols-2 gap-3">
+                    <label style={{ display:'block', fontSize:11, fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase', color:'#94a3b8', marginBottom:8 }}>Register As</label>
+                    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
                       <button
                         type="button"
-                        className={`py-3 rounded-xl border text-sm font-semibold transition-all focus:outline-none ${
-                          role === 'student'
-                            ? 'bg-indigo-600/20 border-indigo-500 text-white shadow-md'
-                            : 'bg-slate-950 border-white/10 text-gray-400 hover:border-white/20'
-                        }`}
                         onClick={() => setRole('student')}
                         disabled={submitting || loadingRole !== null}
+                        style={{ padding:'14px', borderRadius:12, border: role==='student' ? '1px solid #6366f1' : '1px solid rgba(255,255,255,0.1)', background: role==='student' ? 'rgba(99,102,241,0.15)' : 'rgba(255,255,255,0.03)', color: role==='student' ? 'white' : '#9ca3af', fontWeight:700, fontSize:15, cursor:'pointer' }}
                       >
                         👩‍🎓 Student
                       </button>
                       <button
                         type="button"
-                        className={`py-3 rounded-xl border text-sm font-semibold transition-all focus:outline-none ${
-                          role === 'teacher'
-                            ? 'bg-cyan-600/20 border-cyan-500 text-white shadow-md'
-                            : 'bg-slate-950 border-white/10 text-gray-400 hover:border-white/20'
-                        }`}
                         onClick={() => setRole('teacher')}
                         disabled={submitting || loadingRole !== null}
+                        style={{ padding:'14px', borderRadius:12, border: role==='teacher' ? '1px solid #06b6d4' : '1px solid rgba(255,255,255,0.1)', background: role==='teacher' ? 'rgba(6,182,212,0.15)' : 'rgba(255,255,255,0.03)', color: role==='teacher' ? 'white' : '#9ca3af', fontWeight:700, fontSize:15, cursor:'pointer' }}
                       >
                         👨‍🏫 Teacher
                       </button>
@@ -779,61 +639,44 @@ export default function LandingPage() {
                   </div>
                 )}
 
+                {/* Submit */}
                 <button
                   type="submit"
-                  className="w-full bg-gradient-to-r from-indigo-600 to-cyan-600 text-white font-semibold py-3.5 rounded-xl shadow-lg hover:shadow-indigo-500/20 hover:scale-[1.01] active:scale-[0.99] transition-all mt-4 disabled:opacity-50 disabled:scale-100 focus:outline-none"
                   disabled={submitting || loadingRole !== null}
+                  style={{ width:'100%', marginTop:8, padding:'16px', borderRadius:14, border:'none', background:'linear-gradient(90deg, #6366f1, #06b6d4)', color:'white', fontWeight:800, fontSize:16, cursor:'pointer', boxShadow:'0 8px 24px rgba(99,102,241,0.3)', opacity: submitting ? 0.6 : 1 }}
                 >
                   {submitting ? 'Please wait...' : activeTab === 'login' ? 'Sign In' : 'Create Account'}
                 </button>
+
+                {/* Footer toggle */}
+                <p style={{ textAlign:'center', color:'#94a3b8', fontSize:14, margin:0 }}>
+                  {activeTab === 'signup' ? "Already have an account? " : "Don't have an account? "}
+                  <button
+                    type="button"
+                    onClick={() => { setActiveTab(activeTab === 'login' ? 'signup' : 'login'); setAuthError(''); }}
+                    style={{ background:'none', border:'none', color:'#818cf8', fontWeight:700, fontSize:14, cursor:'pointer', padding:0 }}
+                  >
+                    {activeTab === 'signup' ? 'Sign In' : 'Sign Up'}
+                  </button>
+                </p>
               </form>
-
-              {activeTab === 'login' && (
-                <>
-                  <div className="flex items-center my-6 text-gray-500 text-[10px] font-bold uppercase tracking-widest">
-                    <span className="flex-1 border-b border-white/5" />
-                    <span className="px-3">or continue with</span>
-                    <span className="flex-1 border-b border-white/5" />
-                  </div>
-
-                  <div className="space-y-3">
-                    <button
-                      type="button"
-                      className="w-full flex items-center justify-center gap-3 bg-white/5 border border-white/10 hover:bg-white/10 text-white text-sm font-semibold py-3 rounded-xl transition-all focus:outline-none"
-                      onClick={() => handleGoogleLoginClick('student')}
-                      disabled={submitting || loadingRole !== null}
-                    >
-                      {loadingRole === 'student' ? (
-                        'Connecting...'
-                      ) : (
-                        <>
-                          <span>👩‍🎓</span>
-                          <span>Student Google Login</span>
-                        </>
-                      )}
-                    </button>
-                    <button
-                      type="button"
-                      className="w-full flex items-center justify-center gap-3 bg-white/5 border border-white/10 hover:bg-white/10 text-white text-sm font-semibold py-3 rounded-xl transition-all focus:outline-none"
-                      onClick={() => handleGoogleLoginClick('teacher')}
-                      disabled={submitting || loadingRole !== null}
-                    >
-                      {loadingRole === 'teacher' ? (
-                        'Connecting...'
-                      ) : (
-                        <>
-                          <span>👨‍🏫</span>
-                          <span>Teacher Google Login</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </>
-              )}
             </motion.div>
           </motion.div>
         </AnimatePresence>
       )}
+
+      {/* SVG Filters for the spin-glow buttons */}
+      <svg style={{ display: 'none' }}>
+        <filter id="unopaq">
+          <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 3 -1" />
+        </filter>
+        <filter id="unopaq2">
+          <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 4 -1" />
+        </filter>
+        <filter id="unopaq3">
+          <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 5 -1" />
+        </filter>
+      </svg>
 
     </div>
   );

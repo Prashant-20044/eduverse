@@ -27,6 +27,15 @@ const Whiteboard = ({ socket, roomId, isTeacher }) => {
   const [isDrawing, setIsDrawing] = useState(false);
   const [historyCount, setHistoryCount] = useState(0);
   const [redoCount, setRedoCount] = useState(0);
+  const [hoverDrawMode, setHoverDrawMode] = useState(false);
+  // Tracks the last seen pointer device type for the status indicator
+  const [activePointerType, setActivePointerType] = useState(null);
+  // Tracks whether the pointer is physically pressed (for non-hover mode)
+  const isPointerDownRef = useRef(false);
+  // Tracks whether hover-draw is currently active (pointer inside canvas)
+  const hoverDrawActiveRef = useRef(false);
+  // Tracks whether a pen/touch pressure-stroke is in progress
+  const pressureDrawingRef = useRef(false);
 
   const canUndo = historyCount > 0;
   const canRedo = redoCount > 0;
@@ -231,8 +240,25 @@ const Whiteboard = ({ socket, roomId, isTeacher }) => {
     });
   };
 
+  // Starts a new drawing action at the given point
+  const startAction = useCallback((point) => {
+    const action = {
+      type: tool === 'pen' || tool === 'eraser' ? 'path' : tool,
+      tool,
+      color,
+      size,
+      points: [point],
+      start: point,
+      end: point,
+    };
+    activeActionRef.current = action;
+    lastPointRef.current = point;
+    setIsDrawing(true);
+  }, [color, size, tool]);
+
   const handlePointerDown = (event) => {
     if (!isTeacher) return;
+    isPointerDownRef.current = true;
     event.currentTarget.setPointerCapture(event.pointerId);
 
     const point = getPoint(event);
@@ -254,24 +280,95 @@ const Whiteboard = ({ socket, roomId, isTeacher }) => {
       return;
     }
 
-    const action = {
-      type: tool === 'pen' || tool === 'eraser' ? 'path' : tool,
-      tool,
-      color,
-      size,
-      points: [point],
-      start: point,
-      end: point,
-    };
+    // In hover-draw mode for path tools, drawing is already active — no need to start again
+    if (hoverDrawMode && hoverDrawActiveRef.current && (tool === 'pen' || tool === 'eraser')) return;
 
-    activeActionRef.current = action;
-    lastPointRef.current = point;
-    setIsDrawing(true);
+    startAction(point);
   };
 
   const handlePointerMove = (event) => {
-    if (!isTeacher || !isDrawing || !activeActionRef.current) return;
+    if (!isTeacher) return;
+
+    // Track what kind of device is being used so we can show it in the status bar
+    setActivePointerType(event.pointerType);
+
     const point = getPoint(event);
+    const isPenOrTouch = event.pointerType === 'pen' || event.pointerType === 'touch';
+    const hasPressure = event.pressure > 0;
+
+    // ── PRESSURE-BASED DRAWING (stylus / writing pad / finger touch) ────────────
+    // For pen and touch input we rely on pressure instead of click events.
+    // pressure > 0  → pen/finger is touching the surface → draw
+    // pressure === 0 → pen/finger is lifted              → commit stroke
+    if (isPenOrTouch && (tool === 'pen' || tool === 'eraser')) {
+      if (hasPressure) {
+        if (!pressureDrawingRef.current) {
+          // Pen just touched down — start a new stroke
+          pressureDrawingRef.current = true;
+          startAction(point);
+          return;
+        }
+        // Pen is still pressed — continue the stroke
+        const action = activeActionRef.current;
+        if (action && action.type === 'path') {
+          const lastPoint = lastPointRef.current;
+          action.points.push(point);
+          drawAction({
+            type: 'path',
+            tool: action.tool,
+            color: action.color,
+            size: action.size,
+            points: [lastPoint, point],
+          });
+          emitSegment(lastPoint, point, action.tool, action.color, action.size);
+          lastPointRef.current = point;
+        }
+        return;
+      }
+
+      // pressure === 0: pen lifted — commit the current stroke
+      if (pressureDrawingRef.current) {
+        pressureDrawingRef.current = false;
+        if (!isDrawing || !activeActionRef.current) return;
+        const action = activeActionRef.current;
+        setIsDrawing(false);
+        activeActionRef.current = null;
+        lastPointRef.current = null;
+        if (action.type === 'path' && action.points.length > 1) {
+          pushAction(action);
+        } else {
+          redrawBoard();
+        }
+      }
+      return;
+    }
+
+    // ── MOUSE HOVER-DRAW MODE ────────────────────────────────────────────────────
+    if (hoverDrawMode && (tool === 'pen' || tool === 'eraser')) {
+      if (!isDrawing) {
+        hoverDrawActiveRef.current = true;
+        startAction(point);
+        return;
+      }
+      const action = activeActionRef.current;
+      if (action && action.type === 'path') {
+        const lastPoint = lastPointRef.current;
+        action.points.push(point);
+        drawAction({
+          type: 'path',
+          tool: action.tool,
+          color: action.color,
+          size: action.size,
+          points: [lastPoint, point],
+        });
+        emitSegment(lastPoint, point, action.tool, action.color, action.size);
+        lastPointRef.current = point;
+      }
+      return;
+    }
+
+    // ── NORMAL CLICK-DRAG DRAWING ────────────────────────────────────────────────
+    if (!isDrawing || !activeActionRef.current) return;
     const action = activeActionRef.current;
 
     if (action.type === 'path') {
@@ -294,12 +391,25 @@ const Whiteboard = ({ socket, roomId, isTeacher }) => {
   };
 
   const finishDrawing = (event) => {
+    isPointerDownRef.current = false;
+    // Also reset pressure-drawing if pen leaves canvas entirely
+    if (pressureDrawingRef.current) {
+      pressureDrawingRef.current = false;
+    }
+
+    // In hover-draw mode for path tools, only commit when pointer LEAVES the canvas
+    // (handled by pointerleave). For other tools, finish normally.
+    if (hoverDrawMode && activeActionRef.current?.type === 'path' && event?.type !== 'pointerleave' && event?.type !== 'pointercancel') {
+      return;
+    }
+
     if (!isTeacher || !isDrawing || !activeActionRef.current) return;
 
     if (event?.currentTarget?.hasPointerCapture?.(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
     }
 
+    hoverDrawActiveRef.current = false;
     const action = activeActionRef.current;
     setIsDrawing(false);
     activeActionRef.current = null;
@@ -319,6 +429,15 @@ const Whiteboard = ({ socket, roomId, isTeacher }) => {
     }
 
     pushAction(action);
+  };
+
+  // When pointer re-enters canvas in hover-draw mode, resume drawing
+  const handlePointerEnter = (event) => {
+    if (!isTeacher || !hoverDrawMode || !(tool === 'pen' || tool === 'eraser')) return;
+    if (isDrawing) return; // already drawing
+    hoverDrawActiveRef.current = true;
+    const point = getPoint(event);
+    startAction(point);
   };
 
   const handleUndo = () => {
@@ -365,6 +484,18 @@ const Whiteboard = ({ socket, roomId, isTeacher }) => {
 
   const selectTool = (nextTool) => {
     setTool(nextTool);
+    // Hover-draw only makes sense for path tools; auto-disable for shapes/text
+    if (nextTool !== 'pen' && nextTool !== 'eraser') {
+      setHoverDrawMode(false);
+    }
+  };
+
+  const toggleHoverDraw = () => {
+    setHoverDrawMode((prev) => !prev);
+    // When activating, switch to pen if a non-path tool is selected
+    if (!hoverDrawMode && tool !== 'pen' && tool !== 'eraser') {
+      setTool('pen');
+    }
   };
 
   return (
@@ -384,6 +515,16 @@ const Whiteboard = ({ socket, roomId, isTeacher }) => {
                 {label}
               </button>
             ))}
+            <button
+              className={`whiteboard-tool-btn hover-draw-btn ${hoverDrawMode ? 'active hover-draw-on' : ''}`}
+              onClick={toggleHoverDraw}
+              type="button"
+              title={hoverDrawMode ? 'Mouse Hover Draw ON — move mouse to draw (no click needed)' : 'Mouse Hover Draw OFF — enable to draw by moving mouse without clicking. Pen/touch draw automatically.'}
+              aria-label="Toggle mouse hover draw mode"
+              aria-pressed={hoverDrawMode}
+            >
+              🖱️ Hover
+            </button>
           </div>
 
           <div className="whiteboard-tool-section color-section" aria-label="Colors">
@@ -448,17 +589,25 @@ const Whiteboard = ({ socket, roomId, isTeacher }) => {
 
       <div className="whiteboard-status">
         <span>{selectedToolLabel}</span>
+        {activePointerType && (
+          <span className={`pointer-type-badge pointer-type-${activePointerType}`}>
+            {activePointerType === 'pen' && '✏️ Stylus'}
+            {activePointerType === 'touch' && '👆 Touch'}
+            {activePointerType === 'mouse' && '🖱️ Mouse'}
+          </span>
+        )}
         <span>{isTeacher ? 'Editable' : 'View only'}</span>
       </div>
 
       <canvas
         ref={canvasRef}
-        className={`whiteboard-canvas ${isTeacher ? 'is-editable' : 'is-readonly'}`}
+        className={`whiteboard-canvas ${isTeacher ? 'is-editable' : 'is-readonly'} ${hoverDrawMode ? 'hover-draw-active' : ''}`}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={finishDrawing}
         onPointerCancel={finishDrawing}
         onPointerLeave={finishDrawing}
+        onPointerEnter={handlePointerEnter}
       />
     </section>
   );

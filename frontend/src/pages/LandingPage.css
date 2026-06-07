@@ -1,3 +1,139 @@
 html {
   scroll-behavior: smooth;
 }
+
+/* Premium Uiverse Spin-Glow Button Styles */
+.button-container {
+  position: relative;
+  width: 260px;
+  height: 68px;
+}
+
+.button-border {
+  padding: 3px;
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.button {
+  position: absolute;
+  inset: 2.5px;
+  justify-content: center;
+  align-items: center;
+  border: none;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #7c3aed, #4f46e5); /* Gradient from purple to indigo */
+  display: flex;
+  flex-direction: column;
+  color: #fff;
+  overflow: hidden;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.real-button {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  outline: none;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  opacity: 0;
+}
+
+.backdrop {
+  position: absolute;
+  inset: -100px;
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(2, 6, 23, 0.3) 0%,
+    rgba(2, 6, 23, 0.95) 100%
+  );
+  z-index: -1;
+}
+
+.spin {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  opacity: 0.35;
+  overflow: hidden;
+  transition: opacity 0.3s ease;
+}
+
+.real-button:active ~ .button-border .spin {
+  opacity: 1;
+}
+
+.real-button:hover ~ .button-border .spin {
+  opacity: 0.85;
+}
+
+.spin-blur {
+  filter: blur(24px) url(#unopaq);
+}
+
+.spin-intense {
+  inset: -1px;
+  filter: blur(4px) url(#unopaq2);
+  border-radius: inherit;
+}
+
+.spin-inside {
+  inset: -2px;
+  border-radius: inherit;
+  filter: blur(1.5px) url(#unopaq3);
+  z-index: 0;
+}
+
+.spin::before {
+  content: "";
+  position: absolute;
+  inset: -150%;
+  animation:
+    speen 7s cubic-bezier(0.55, 0.085, 0.68, 0.53) infinite,
+    woah 4s ease-in-out infinite;
+  animation-play-state: paused;
+}
+
+.real-button:hover ~ .button-border .spin::before {
+  animation-play-state: running;
+}
+
+/* Gradient Theme: Indigo to Cyan */
+.spin-blur::before {
+  background: linear-gradient(90deg, #6366f1 25%, #0000 50%, #06b6d4 75%);
+}
+
+.spin-intense::before {
+  background: linear-gradient(90deg, #818cf8 20%, #0000 45% 55%, #22d3ee 80%);
+}
+
+.spin-inside::before {
+  background: linear-gradient(90deg, #a5b4fc 25%, #0000 45% 55%, #67e8f9 75%);
+}
+
+@keyframes speen {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes woah {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.85);
+  }
+}
