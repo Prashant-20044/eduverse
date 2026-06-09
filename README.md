@@ -1,4 +1,4 @@
-# 🎓 EduStream — Online Coaching Platform
+# 🎓 Eduverse — Online Coaching Platform
 
 A full-stack real-time online coaching platform that enables teachers to conduct live classes, share materials, and create tests — while students join streams, interact via chat and whiteboard, and take timed assessments.
 
