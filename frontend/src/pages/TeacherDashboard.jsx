@@ -4,7 +4,7 @@ import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import './Dashboard.css';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = '/api';
 
 const getDefaultScheduleTime = () => {
   const date = new Date();

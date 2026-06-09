@@ -23,8 +23,8 @@ const StudentDashboard = () => {
     const fetchStudentDashboard = async () => {
       try {
         const [classesRes, testsRes] = await Promise.all([
-          axios.get('http://localhost:5000/api/classes/live'),
-          axios.get('http://localhost:5000/api/tests/available'),
+          axios.get('/api/classes/live'),
+          axios.get('/api/tests/available'),
         ]);
         if (classesRes.data.success) {
           setActiveClasses(classesRes.data.classes.map((classItem) => ({

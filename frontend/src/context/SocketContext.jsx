@@ -8,7 +8,7 @@ export const SocketProvider = ({ children }) => {
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    const newSocket = io('http://localhost:5000', {
+    const newSocket = io('/', {
       withCredentials: true,
       reconnection: true,
       reconnectionDelay: 1000,

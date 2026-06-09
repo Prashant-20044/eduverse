@@ -21,7 +21,7 @@ export const AuthProvider = ({ children }) => {
 
   const fetchUser = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/auth/me');
+      const res = await axios.get('/api/auth/me');
       if (res.data.success) {
         setUser(res.data.user);
       }
@@ -36,7 +36,7 @@ export const AuthProvider = ({ children }) => {
 
   const loginWithOAuth = async (credential, role) => {
     try {
-      const res = await axios.post('http://localhost:5000/api/auth/google', { credential, role });
+      const res = await axios.post('/api/auth/google', { credential, role });
       if (res.data.success) {
         localStorage.setItem('token', res.data.token);
         axios.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;
@@ -52,7 +52,7 @@ export const AuthProvider = ({ children }) => {
 
   const loginWithCredentials = async (email, password) => {
     try {
-      const res = await axios.post('http://localhost:5000/api/auth/login', { email, password });
+      const res = await axios.post('/api/auth/login', { email, password });
       if (res.data.success) {
         localStorage.setItem('token', res.data.token);
         axios.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;
@@ -71,7 +71,7 @@ export const AuthProvider = ({ children }) => {
 
   const signupWithCredentials = async (name, email, password, role) => {
     try {
-      const res = await axios.post('http://localhost:5000/api/auth/signup', { name, email, password, role });
+      const res = await axios.post('/api/auth/signup', { name, email, password, role });
       if (res.data.success) {
         localStorage.setItem('token', res.data.token);
         axios.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;

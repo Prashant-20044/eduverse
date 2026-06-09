@@ -1,5 +1,6 @@
 const express = require('express');
 const http = require('http');
+const path = require('path');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
@@ -19,7 +20,7 @@ const allowedOrigins = [
   'http://127.0.0.1:5175'
 ];
 
-// Enable CORS for frontend
+// Enable CORS for frontend (still useful during development)
 app.use(cors({
   origin: allowedOrigins,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
@@ -39,11 +40,20 @@ const io = new Server(server, {
 
 require('./socket')(io); // Setup socket handlers
 
-// Routes
+// API Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/classes', require('./routes/classes'));
 app.use('/api/upload', require('./routes/upload'));
 app.use('/api/tests', require('./routes/tests'));
+
+// --- Serve frontend static files ---
+const frontendDistPath = path.join(__dirname, '..', 'frontend', 'dist');
+app.use(express.static(frontendDistPath));
+
+// Catch-all: send index.html for any non-API route (SPA client-side routing)
+app.get('*', (req, res) => {
+  res.sendFile(path.join(frontendDistPath, 'index.html'));
+});
 
 const PORT = process.env.PORT || 5000;
 

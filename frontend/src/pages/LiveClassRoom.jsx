@@ -44,7 +44,7 @@ const LiveClassRoom = () => {
   const handleLeaveOrEnd = async () => {
     if (isTeacher) {
       try {
-        await axios.patch(`http://localhost:5000/api/classes/${classId}/end`);
+        await axios.patch(`/api/classes/${classId}/end`);
       } catch (err) {
         console.error('Failed to end class:', err);
       }
@@ -59,7 +59,7 @@ const LiveClassRoom = () => {
 
     const fetchClass = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/api/classes/${classId}`);
+        const res = await axios.get(`/api/classes/${classId}`);
         if (res.data.success) {
           setClassTopic(res.data.class.topic);
         }
