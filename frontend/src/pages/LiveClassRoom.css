@@ -2,8 +2,8 @@
   height: 100vh;
   display: flex;
   flex-direction: column;
-  padding: 1rem;
-  gap: 1rem;
+  padding: 0.5rem;
+  gap: 0.5rem;
   background: var(--bg-dark);
 }
 
@@ -11,28 +11,83 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.5rem 1.5rem;
+  padding: 0 0.75rem;
+  height: 38px;
+  min-height: 38px;
 }
 
 .header-left {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: 1rem;
 }
 
 .header-left h2 {
-  font-size: 1.25rem;
+  font-size: 1.05rem;
   font-weight: 600;
   margin: 0;
+  color: #f8fafc;
+  display: flex;
+  align-items: center;
+  line-height: 1;
 }
 
-.role-badge {
-  background: rgba(99, 102, 241, 0.2);
-  color: #a5b4fc;
-  padding: 4px 12px;
-  border-radius: 12px;
-  font-size: 0.875rem;
-  border: 1px solid rgba(99, 102, 241, 0.4);
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.classroom-header .btn-primary,
+.classroom-header .btn-outline,
+.classroom-header .role-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: 28px !important;
+  min-height: 28px !important;
+  max-height: 28px !important;
+  padding: 0 10px !important;
+  font-size: 0.78rem !important;
+  font-weight: 600 !important;
+  line-height: 1 !important;
+  border-radius: 6px !important;
+  box-shadow: none !important;
+  transform: none !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+  vertical-align: middle !important;
+  gap: 6px !important;
+  transition: all 0.2s ease !important;
+}
+
+.classroom-header .btn-primary {
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)) !important;
+  color: white !important;
+  border: none !important;
+}
+
+.classroom-header .btn-primary:hover {
+  background: linear-gradient(135deg, var(--primary-hover), var(--secondary-color)) !important;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3) !important;
+}
+
+.classroom-header .btn-outline {
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: var(--text-main) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+
+.classroom-header .btn-outline:hover {
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
+  box-shadow: none !important;
+}
+
+.classroom-header .role-badge {
+  background: rgba(99, 102, 241, 0.15) !important;
+  color: #a5b4fc !important;
+  border: 1px solid rgba(99, 102, 241, 0.3) !important;
 }
 
 .classroom-main {
@@ -97,7 +152,7 @@
 }
 
 .generate-notes-btn {
-  margin-bottom: 0.75rem;
+  margin-bottom: 0;
 }
 
 .materials-error {
