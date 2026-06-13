@@ -18,6 +18,10 @@ const LiveClassRoom = () => {
   const [classMaterials, setClassMaterials] = useState(location.state?.classData?.materials || []);
   const [isGeneratingNotes, setIsGeneratingNotes] = useState(false);
   const [materialsError, setMaterialsError] = useState('');
+  const [uploadingPpt, setUploadingPpt] = useState(false);
+  const [pptFile, setPptFile] = useState(null);
+  const [pptError, setPptError] = useState('');
+  const [broadcastedPpt, setBroadcastedPpt] = useState(null); // shown to students
 
   // If a teacher started this from dashboard, state will have isTeacher = true
   // Otherwise we infer from the logged in user's role
@@ -90,9 +94,20 @@ const LiveClassRoom = () => {
     socket.on('whiteboard-snapshot-saved', handleMaterialSaved);
     socket.on('whiteboard-notes-generated', handleMaterialSaved);
 
+    // Listen for PPT/PDF broadcast from teacher
+    const handlePptBroadcast = (material) => {
+      setBroadcastedPpt(material);
+      setClassMaterials((current) => {
+        if (current.some((item) => item.url === material.url)) return current;
+        return [...current, material];
+      });
+    };
+    socket.on('ppt-broadcasted', handlePptBroadcast);
+
     return () => {
       socket.off('whiteboard-snapshot-saved', handleMaterialSaved);
       socket.off('whiteboard-notes-generated', handleMaterialSaved);
+      socket.off('ppt-broadcasted', handlePptBroadcast);
     };
   }, [socket]);
 
@@ -109,13 +124,55 @@ const LiveClassRoom = () => {
     try {
       const res = await axios.post(`/api/upload/whiteboard-notes/${classId}`);
       if (res.data.success) {
-        setClassMaterials((current) => [...current, res.data.material]);
-        socket?.emit('whiteboard-notes-generated', classId, res.data.material);
+        const material = res.data.material;
+        setClassMaterials((current) => [...current, material]);
+        socket?.emit('whiteboard-notes-generated', classId, material);
+
+        // Auto-download the PDF in the teacher's browser
+        const link = document.createElement('a');
+        link.href = material.url;
+        link.download = material.filename || 'whiteboard-notes.pdf';
+        link.target = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
       }
     } catch (err) {
       setMaterialsError(err.response?.data?.message || 'Could not generate PDF notes.');
     } finally {
       setIsGeneratingNotes(false);
+    }
+  };
+
+  const handleUploadPpt = async () => {
+    if (!isTeacher || !pptFile || uploadingPpt) return;
+
+    setUploadingPpt(true);
+    setPptError('');
+
+    try {
+      const formData = new FormData();
+      formData.append('file', pptFile);
+
+      const res = await axios.post(`/api/upload/material/${classId}`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+
+      if (res.data.success) {
+        const material = res.data.material;
+        setClassMaterials((current) => [...current, material]);
+        setBroadcastedPpt(material);
+        // Broadcast to all students in room
+        socket?.emit('ppt-broadcast', classId, material);
+        setPptFile(null);
+        // Reset file input
+        const fileInput = document.getElementById('ppt-upload-input');
+        if (fileInput) fileInput.value = '';
+      }
+    } catch (err) {
+      setPptError(err.response?.data?.message || 'Could not upload file.');
+    } finally {
+      setUploadingPpt(false);
     }
   };
 
@@ -159,6 +216,71 @@ const LiveClassRoom = () => {
             onSnapshotSaved={handleSnapshotSaved}
           />
 
+          {/* PPT/PDF Broadcast Panel - teacher uploads, students see it live */}
+          {isTeacher && (
+            <section className="class-materials-panel glass-panel" aria-label="Broadcast slides">
+              <div className="materials-heading">
+                <h3>📤 Broadcast Slides</h3>
+              </div>
+              <p style={{ fontSize: '0.82rem', color: '#94a3b8', marginBottom: '10px' }}>
+                Upload a PPT or PDF — students will see it instantly in their classroom.
+              </p>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                <input
+                  id="ppt-upload-input"
+                  type="file"
+                  accept=".pdf,.ppt,.pptx"
+                  className="input-field"
+                  style={{ flex: 1, minWidth: 0, fontSize: '0.82rem' }}
+                  onChange={(e) => setPptFile(e.target.files?.[0] || null)}
+                />
+                <button
+                  className="btn-primary"
+                  onClick={handleUploadPpt}
+                  disabled={!pptFile || uploadingPpt}
+                  type="button"
+                  style={{ whiteSpace: 'nowrap' }}
+                >
+                  {uploadingPpt ? 'Broadcasting...' : '📡 Broadcast'}
+                </button>
+              </div>
+              {pptError && <div className="materials-error" style={{ marginTop: 8 }}>{pptError}</div>}
+              {broadcastedPpt && (
+                <div style={{ marginTop: 12 }}>
+                  <p style={{ fontSize: '0.78rem', color: '#10b981', fontWeight: 700 }}>✅ Currently Broadcasting:</p>
+                  <a
+                    href={broadcastedPpt.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="notes-download-link"
+                    style={{ marginTop: 6 }}
+                  >
+                    <span>{broadcastedPpt.type?.toUpperCase() || 'FILE'}</span>
+                    {broadcastedPpt.filename || 'Broadcast file'}
+                  </a>
+                </div>
+              )}
+            </section>
+          )}
+
+          {/* Student: Show broadcasted PPT if teacher shared one */}
+          {!isTeacher && broadcastedPpt && (
+            <section className="class-materials-panel glass-panel" aria-label="Shared slides">
+              <div className="materials-heading">
+                <h3>📎 Slides from Teacher</h3>
+              </div>
+              <a
+                href={broadcastedPpt.url}
+                target="_blank"
+                rel="noreferrer"
+                className="notes-download-link"
+              >
+                <span>{broadcastedPpt.type?.toUpperCase() || 'FILE'}</span>
+                {broadcastedPpt.filename || 'Class slides'}
+              </a>
+            </section>
+          )}
+
           {shouldShowMaterials && (
             <section className="class-materials-panel glass-panel" aria-label="Saved whiteboards">
               <div className="materials-heading">
@@ -166,14 +288,21 @@ const LiveClassRoom = () => {
                 <span>{whiteboardSnapshots.length}</span>
               </div>
               {isTeacher && (
-                <button
-                  className="btn-primary btn-full generate-notes-btn"
-                  onClick={handleGenerateNotesPdf}
-                  disabled={isGeneratingNotes || whiteboardSnapshots.length === 0}
-                  type="button"
-                >
-                  {isGeneratingNotes ? 'Generating PDF...' : 'Generate PDF Notes'}
-                </button>
+                <>
+                  <button
+                    className="btn-primary btn-full generate-notes-btn"
+                    onClick={handleGenerateNotesPdf}
+                    disabled={isGeneratingNotes || whiteboardSnapshots.length === 0}
+                    type="button"
+                  >
+                    {isGeneratingNotes ? 'Generating PDF...' : '⬇️ Generate & Download PDF'}
+                  </button>
+                  {whiteboardSnapshots.length === 0 && (
+                    <p style={{ fontSize: '0.78rem', color: '#64748b', marginTop: 6 }}>
+                      Save at least one whiteboard snapshot first.
+                    </p>
+                  )}
+                </>
               )}
               {materialsError && <div className="materials-error">{materialsError}</div>}
               {notesPdfs.length > 0 && (

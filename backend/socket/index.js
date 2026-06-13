@@ -128,6 +128,12 @@ module.exports = (io) => {
       socket.to(roomId).emit('whiteboard-notes-generated', material);
     });
 
+    // --- PPT/PDF Broadcast ---
+    socket.on('ppt-broadcast', (roomId, material) => {
+      console.log(`ppt-broadcast event in room ${roomId}: ${material?.filename}`);
+      socket.to(roomId).emit('ppt-broadcasted', material);
+    });
+
     // --- Notifications ---
     socket.on('stream-started', (classData) => {
       const classId = classData.classId || classData._id;

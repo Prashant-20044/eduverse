@@ -1,11 +1,38 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import axios from 'axios';
+import rough from 'roughjs';
+import {
+  Pencil,
+  Eraser,
+  Minus,
+  Square,
+  Circle,
+  Type,
+  Undo2,
+  Redo2,
+  Download,
+  Camera,
+  Trash2,
+  Plus,
+  ArrowUp,
+  ArrowDown,
+  Sparkles,
+  MousePointerClick
+} from 'lucide-react';
 import './Whiteboard.css';
 
 const BOARD_BACKGROUND = '#ffffff';
 const INITIAL_BOARD_HEIGHT = 1600;
 const BOARD_HEIGHT_STEP = 800;
-const COLORS = ['#111827', '#2563eb', '#dc2626', '#16a34a', '#f59e0b', '#7c3aed'];
+const COLORS = [
+  '#1e293b', // Slate
+  '#2563eb', // Blue
+  '#dc2626', // Red
+  '#16a34a', // Green
+  '#ea580c', // Orange
+  '#7c3aed', // Purple
+  '#0891b2', // Cyan
+];
 const TOOL_LABELS = {
   pen: 'Pen',
   eraser: 'Eraser',
@@ -27,8 +54,10 @@ const Whiteboard = ({ socket, roomId, isTeacher, onSnapshotSaved }) => {
   const lastPointRef = useRef(null);
 
   const [tool, setTool] = useState('pen');
-  const [color, setColor] = useState('#111827');
+  const [color, setColor] = useState('#1e293b');
   const [size, setSize] = useState(4);
+  const [fillStyle, setFillStyle] = useState('none'); // 'none' | 'hachure' | 'solid'
+  const [strokeStyle, setStrokeStyle] = useState('solid'); // 'solid' | 'dashed'
   const [isDrawing, setIsDrawing] = useState(false);
   const [historyCount, setHistoryCount] = useState(0);
   const [redoCount, setRedoCount] = useState(0);
@@ -76,55 +105,79 @@ const Whiteboard = ({ socket, roomId, isTeacher, onSnapshotSaved }) => {
 
   const drawAction = useCallback((action) => {
     const context = getContext();
-    if (!context) return;
+    const canvas = canvasRef.current;
+    if (!context || !canvas) return;
 
-    context.save();
-    context.globalCompositeOperation = 'source-over';
-    context.strokeStyle = action.tool === 'eraser' ? BOARD_BACKGROUND : action.color;
-    context.fillStyle = action.color;
-    context.lineWidth = action.size;
-    context.lineCap = 'round';
-    context.lineJoin = 'round';
+    if (action.tool === 'eraser') {
+      context.save();
+      context.globalCompositeOperation = 'source-over';
+      context.strokeStyle = BOARD_BACKGROUND;
+      context.lineWidth = action.size * 2;
+      context.lineCap = 'round';
+      context.lineJoin = 'round';
+
+      if (action.type === 'path' && action.points.length) {
+        context.beginPath();
+        context.moveTo(action.points[0].x, action.points[0].y);
+        action.points.slice(1).forEach((point) => context.lineTo(point.x, point.y));
+        context.stroke();
+      }
+      context.restore();
+      return;
+    }
+
+    if (action.type === 'text') {
+      context.save();
+      context.fillStyle = action.color;
+      context.font = `bold ${Math.max(action.size * 4, 18)}px "Comic Sans MS", "Architects Daughter", cursive, sans-serif`;
+      context.textBaseline = 'top';
+      context.fillText(action.text, action.point.x, action.point.y);
+      context.restore();
+      return;
+    }
+
+    const rc = rough.canvas(canvas);
+    const options = {
+      stroke: action.color,
+      strokeWidth: action.size,
+      roughness: action.type === 'path' ? 0.75 : 1.4,
+      bowing: 1.5,
+    };
+
+    if (action.strokeStyle === 'dashed') {
+      options.strokeLineDash = [8, 8];
+    }
+
+    if (action.fillStyle && action.fillStyle !== 'none') {
+      options.fill = action.color;
+      options.fillStyle = action.fillStyle;
+      options.fillWeight = Math.max(action.size / 2, 1.5);
+    }
 
     if (action.type === 'path' && action.points.length) {
-      context.beginPath();
-      context.moveTo(action.points[0].x, action.points[0].y);
-      action.points.slice(1).forEach((point) => context.lineTo(point.x, point.y));
-      context.stroke();
+      const pts = action.points.map(p => [p.x, p.y]);
+      rc.linearPath(pts, options);
     }
 
     if (action.type === 'line') {
-      context.beginPath();
-      context.moveTo(action.start.x, action.start.y);
-      context.lineTo(action.end.x, action.end.y);
-      context.stroke();
+      rc.line(action.start.x, action.start.y, action.end.x, action.end.y, options);
     }
 
     if (action.type === 'rectangle') {
       const x = Math.min(action.start.x, action.end.x);
       const y = Math.min(action.start.y, action.end.y);
-      const width = Math.abs(action.end.x - action.start.x);
-      const height = Math.abs(action.end.y - action.start.y);
-      context.strokeRect(x, y, width, height);
+      const w = Math.abs(action.end.x - action.start.x);
+      const h = Math.abs(action.end.y - action.start.y);
+      rc.rectangle(x, y, w, h, options);
     }
 
     if (action.type === 'ellipse') {
       const centerX = (action.start.x + action.end.x) / 2;
       const centerY = (action.start.y + action.end.y) / 2;
-      const radiusX = Math.abs(action.end.x - action.start.x) / 2;
-      const radiusY = Math.abs(action.end.y - action.start.y) / 2;
-      context.beginPath();
-      context.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, Math.PI * 2);
-      context.stroke();
+      const diameterX = Math.abs(action.end.x - action.start.x);
+      const diameterY = Math.abs(action.end.y - action.start.y);
+      rc.ellipse(centerX, centerY, diameterX, diameterY, options);
     }
-
-    if (action.type === 'text') {
-      context.font = `${Math.max(action.size * 4, 18)}px Inter, Segoe UI, sans-serif`;
-      context.textBaseline = 'top';
-      context.fillText(action.text, action.point.x, action.point.y);
-    }
-
-    context.restore();
   }, [getContext]);
 
   const redrawBoard = useCallback((previewAction) => {
@@ -283,11 +336,13 @@ const Whiteboard = ({ socket, roomId, isTeacher, onSnapshotSaved }) => {
       points: [point],
       start: point,
       end: point,
+      fillStyle,
+      strokeStyle,
     };
     activeActionRef.current = action;
     lastPointRef.current = point;
     setIsDrawing(true);
-  }, [color, size, tool]);
+  }, [color, size, tool, fillStyle, strokeStyle]);
 
   const handlePointerDown = (event) => {
     if (!isTeacher) return;
@@ -586,121 +641,231 @@ const Whiteboard = ({ socket, roomId, isTeacher, onSnapshotSaved }) => {
     }
   };
 
+  const getToolIcon = (toolKey) => {
+    switch (toolKey) {
+      case 'pen': return <Pencil size={18} />;
+      case 'eraser': return <Eraser size={18} />;
+      case 'line': return <Minus size={18} style={{ transform: 'rotate(-45deg)' }} />;
+      case 'rectangle': return <Square size={18} />;
+      case 'ellipse': return <Circle size={18} />;
+      case 'text': return <Type size={18} />;
+      default: return null;
+    }
+  };
+
   return (
-    <section className="whiteboard-container glass-panel" aria-label="Live whiteboard">
+    <section className="whiteboard-container" aria-label="Live whiteboard">
       {isTeacher ? (
-        <div className="whiteboard-toolbar" aria-label="Whiteboard tools">
-          <div className="whiteboard-tool-section">
-            {Object.entries(TOOL_LABELS).map(([toolKey, label]) => (
+        <>
+          {/* Central Top Floating Toolbar */}
+          <div className="wb-floating-toolbar" aria-label="Whiteboard tools">
+            {Object.keys(TOOL_LABELS).map((toolKey) => (
               <button
                 key={toolKey}
-                className={`whiteboard-tool-btn ${tool === toolKey ? 'active' : ''}`}
+                className={`wb-tool-btn ${tool === toolKey ? 'active' : ''}`}
                 onClick={() => selectTool(toolKey)}
                 type="button"
-                title={label}
-                aria-label={label}
+                title={TOOL_LABELS[toolKey]}
               >
-                {label}
+                {getToolIcon(toolKey)}
               </button>
             ))}
+            
+            <div className="wb-separator" />
+
             <button
-              className={`whiteboard-tool-btn hover-draw-btn ${hoverDrawMode ? 'active hover-draw-on' : ''}`}
+              className={`wb-tool-btn hover-draw-btn ${hoverDrawMode ? 'active' : ''}`}
               onClick={toggleHoverDraw}
               type="button"
-              title={hoverDrawMode ? 'Mouse Hover Draw ON — move mouse to draw (no click needed)' : 'Mouse Hover Draw OFF — enable to draw by moving mouse without clicking. Pen/touch draw automatically.'}
-              aria-label="Toggle mouse hover draw mode"
-              aria-pressed={hoverDrawMode}
+              title="Mouse Hover Draw Mode (Draw without clicking)"
             >
-              🖱️ Hover
+              <MousePointerClick size={18} />
             </button>
           </div>
 
-          <div className="whiteboard-tool-section color-section" aria-label="Colors">
-            {COLORS.map((swatch) => (
-              <button
-                key={swatch}
-                className={`color-swatch ${color === swatch ? 'active' : ''}`}
-                onClick={() => {
-                  setColor(swatch);
-                  setTool('pen');
-                }}
-                style={{ '--swatch-color': swatch }}
-                type="button"
-                title={swatch}
-                aria-label={`Use color ${swatch}`}
+          {/* Left Properties Panel */}
+          <div className="wb-properties-panel">
+            <div className="wb-panel-title">Stroke Color</div>
+            <div className="wb-color-grid">
+              {COLORS.map((swatch) => (
+                <button
+                  key={swatch}
+                  className={`wb-color-swatch ${color === swatch ? 'active' : ''}`}
+                  onClick={() => {
+                    setColor(swatch);
+                    if (tool === 'eraser') setTool('pen');
+                  }}
+                  style={{ backgroundColor: swatch }}
+                  type="button"
+                  title={swatch}
+                />
+              ))}
+              <div className="wb-custom-color-wrapper">
+                <input
+                  type="color"
+                  value={color}
+                  onChange={(e) => {
+                    setColor(e.target.value);
+                    if (tool === 'eraser') setTool('pen');
+                  }}
+                  className="wb-custom-color-input"
+                  title="Custom Color"
+                />
+                <Sparkles size={14} className="wb-custom-color-icon" />
+              </div>
+            </div>
+
+            {tool !== 'eraser' && tool !== 'text' && (
+              <>
+                <div className="wb-separator-h" />
+                <div className="wb-panel-title">Fill Style</div>
+                <div className="wb-option-group">
+                  <button
+                    className={`wb-option-btn ${fillStyle === 'none' ? 'active' : ''}`}
+                    onClick={() => setFillStyle('none')}
+                    type="button"
+                  >
+                    Transparent
+                  </button>
+                  <button
+                    className={`wb-option-btn ${fillStyle === 'hachure' ? 'active' : ''}`}
+                    onClick={() => setFillStyle('hachure')}
+                    type="button"
+                  >
+                    Hachure
+                  </button>
+                  <button
+                    className={`wb-option-btn ${fillStyle === 'solid' ? 'active' : ''}`}
+                    onClick={() => setFillStyle('solid')}
+                    type="button"
+                  >
+                    Solid
+                  </button>
+                </div>
+
+                <div className="wb-separator-h" />
+                <div className="wb-panel-title">Stroke Style</div>
+                <div className="wb-option-group">
+                  <button
+                    className={`wb-option-btn ${strokeStyle === 'solid' ? 'active' : ''}`}
+                    onClick={() => setStrokeStyle('solid')}
+                    type="button"
+                  >
+                    Solid
+                  </button>
+                  <button
+                    className={`wb-option-btn ${strokeStyle === 'dashed' ? 'active' : ''}`}
+                    onClick={() => setStrokeStyle('dashed')}
+                    type="button"
+                  >
+                    Dashed
+                  </button>
+                </div>
+              </>
+            )}
+
+            <div className="wb-separator-h" />
+            <div className="wb-panel-title">Stroke Width ({size}px)</div>
+            <div className="wb-size-slider-container">
+              <input
+                type="range"
+                min="2"
+                max="20"
+                value={size}
+                onChange={(e) => setSize(Number(e.target.value))}
+                className="wb-slider"
               />
-            ))}
-            <input
-              className="custom-color"
-              type="color"
-              value={color}
-              onChange={(event) => {
-                setColor(event.target.value);
-                setTool('pen');
-              }}
-              title="Custom color"
-              aria-label="Custom color"
-            />
+            </div>
           </div>
 
-          <label className="size-control">
-            <span>Size</span>
-            <input
-              type="range"
-              min="2"
-              max="28"
-              value={size}
-              onChange={(event) => setSize(Number(event.target.value))}
-              aria-label="Brush size"
-            />
-            <output>{size}</output>
-          </label>
-
-          <div className="whiteboard-tool-section">
-            <button className="whiteboard-action-btn" onClick={handleUndo} disabled={!canUndo} type="button">
-              Undo
+          {/* Bottom Left Undo/Redo/Clear Panel */}
+          <div className="wb-actions-panel bottom-left">
+            <button
+              className="wb-action-btn"
+              onClick={handleUndo}
+              disabled={!canUndo}
+              title="Undo"
+              type="button"
+            >
+              <Undo2 size={16} />
             </button>
-            <button className="whiteboard-action-btn" onClick={handleRedo} disabled={!canRedo} type="button">
-              Redo
+            <button
+              className="wb-action-btn"
+              onClick={handleRedo}
+              disabled={!canRedo}
+              title="Redo"
+              type="button"
+            >
+              <Redo2 size={16} />
             </button>
-            <button className="whiteboard-action-btn" onClick={handleDownload} type="button">
-              Download
-            </button>
-            <button className="whiteboard-action-btn" onClick={handleSaveSnapshot} disabled={isSavingSnapshot} type="button">
-              {isSavingSnapshot ? 'Saving...' : 'Save Snap'}
-            </button>
-            <button className="whiteboard-action-btn danger" onClick={handleClear} disabled={!canUndo} type="button">
-              Clear
+            <button
+              className="wb-action-btn danger"
+              onClick={handleClear}
+              disabled={!canUndo}
+              title="Clear Canvas"
+              type="button"
+            >
+              <Trash2 size={16} />
             </button>
           </div>
 
-          <div className="whiteboard-tool-section">
-            <button className="whiteboard-action-btn" onClick={() => scrollBoard('top')} type="button">
-              Top
+          {/* Bottom Right Canvas Controls Panel */}
+          <div className="wb-actions-panel bottom-right">
+            <button
+              className="wb-action-btn text-btn"
+              onClick={() => scrollBoard('top')}
+              type="button"
+            >
+              <ArrowUp size={14} /> Top
             </button>
-            <button className="whiteboard-action-btn" onClick={() => scrollBoard('bottom')} type="button">
-              Bottom
+            <button
+              className="wb-action-btn text-btn"
+              onClick={() => scrollBoard('bottom')}
+              type="button"
+            >
+              <ArrowDown size={14} /> Bottom
             </button>
-            <button className="whiteboard-action-btn" onClick={handleAddSpace} type="button">
-              Add Space
+            <button
+              className="wb-action-btn text-btn"
+              onClick={handleAddSpace}
+              type="button"
+            >
+              <Plus size={14} /> Add Space
+            </button>
+            <div className="wb-vertical-separator" />
+            <button
+              className="wb-action-btn text-btn"
+              onClick={handleSaveSnapshot}
+              disabled={isSavingSnapshot}
+              type="button"
+            >
+              <Camera size={14} /> {isSavingSnapshot ? 'Saving...' : 'Save Snap'}
+            </button>
+            <button
+              className="wb-action-btn text-btn"
+              onClick={handleDownload}
+              type="button"
+            >
+              <Download size={14} /> Export
             </button>
           </div>
-        </div>
+        </>
       ) : (
-        <div className="whiteboard-viewer-badge">Student view</div>
+        <div className="wb-viewer-badge">Student View Mode</div>
       )}
 
-      <div className="whiteboard-status">
-        <span>{selectedToolLabel}</span>
-        {saveStatus && <span>{saveStatus}</span>}
+      {/* Floating Status Indicator */}
+      <div className="wb-floating-status">
+        <span className="wb-status-tool">{selectedToolLabel}</span>
+        {saveStatus && <span className="wb-status-msg">{saveStatus}</span>}
         {activePointerType && (
-          <span className={`pointer-type-badge pointer-type-${activePointerType}`}>
+          <span className={`wb-pointer-badge ${activePointerType}`}>
             {activePointerType === 'pen' && '✏️ Stylus'}
             {activePointerType === 'touch' && '👆 Touch'}
             {activePointerType === 'mouse' && '🖱️ Mouse'}
           </span>
         )}
-        <span>{isTeacher ? 'Editable' : 'View only'}</span>
+        <span className="wb-status-role">{isTeacher ? 'Teacher (Editable)' : 'Student (View Only)'}</span>
       </div>
 
       <div className="whiteboard-scroll-area" ref={scrollRef}>

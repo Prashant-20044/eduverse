@@ -39,6 +39,11 @@ const TeacherDashboard = () => {
   const [startingNow, setStartingNow] = useState(false);
   const [startingClassId, setStartingClassId] = useState(null);
   const [error, setError] = useState('');
+  const [uploadClassId, setUploadClassId] = useState('');
+  const [uploadFile, setUploadFile] = useState(null);
+  const [uploadingMaterial, setUploadingMaterial] = useState(false);
+  const [uploadSuccess, setUploadSuccess] = useState('');
+  const [uploadError, setUploadError] = useState('');
 
   const upcomingClasses = useMemo(() => {
     return classes.filter((classItem) => classItem.status !== 'ended');
@@ -209,6 +214,37 @@ const TeacherDashboard = () => {
     }
   };
 
+  const handleUploadMaterial = async (event) => {
+    event.preventDefault();
+    if (!uploadClassId || !uploadFile) {
+      setUploadError('Please select a class and a file.');
+      return;
+    }
+
+    setUploadingMaterial(true);
+    setUploadError('');
+    setUploadSuccess('');
+
+    const formData = new FormData();
+    formData.append('file', uploadFile);
+
+    try {
+      const res = await axios.post(`${API_URL}/upload/material/${uploadClassId}`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      if (res.data.success) {
+        setUploadSuccess(`✅ "${res.data.material.filename}" uploaded successfully! Students can now access it.`);
+        setUploadFile(null);
+        setUploadClassId('');
+        event.target.reset();
+      }
+    } catch (err) {
+      setUploadError(err.response?.data?.message || 'Upload failed.');
+    } finally {
+      setUploadingMaterial(false);
+    }
+  };
+
   return (
     <div className="dashboard-container teacher-profile-page">
       <nav className="dashboard-nav glass-panel">
@@ -342,6 +378,69 @@ const TeacherDashboard = () => {
                 {startingNow ? 'Starting...' : 'Start Now'}
               </button>
             </form>
+          </aside>
+        </section>
+
+        <section className="schedule-layout">
+          <div className="schedule-panel glass-panel">
+            <div className="section-heading">
+              <div>
+                <p className="eyebrow">Resources</p>
+                <h2>Upload Slides</h2>
+              </div>
+            </div>
+            <p style={{ color: '#94a3b8', fontSize: '0.85rem', marginBottom: 16 }}>
+              Upload a PPT or PDF to any class — students will see it in their materials panel.
+            </p>
+
+            {classes.length === 0 ? (
+              <div className="empty-state compact">
+                <p>Create a class first to upload materials.</p>
+              </div>
+            ) : (
+              <form onSubmit={handleUploadMaterial} className="class-form">
+                <div className="form-group">
+                  <label>Select Class</label>
+                  <select
+                    className="input-field"
+                    value={uploadClassId}
+                    onChange={(e) => { setUploadClassId(e.target.value); setUploadSuccess(''); setUploadError(''); }}
+                  >
+                    <option value="">— choose a class —</option>
+                    {classes.map((c) => (
+                      <option key={c._id} value={c._id}>
+                        {c.topic} ({c.status})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>File (PPT / PDF)</label>
+                  <input
+                    type="file"
+                    className="input-field"
+                    accept=".pdf,.ppt,.pptx"
+                    onChange={(e) => { setUploadFile(e.target.files?.[0] || null); setUploadSuccess(''); setUploadError(''); }}
+                  />
+                </div>
+
+                {uploadError && <div className="dashboard-error">{uploadError}</div>}
+                {uploadSuccess && <div style={{ color: '#10b981', fontSize: '0.85rem', marginBottom: 8 }}>{uploadSuccess}</div>}
+
+                <button type="submit" className="btn-primary btn-full" disabled={uploadingMaterial}>
+                  {uploadingMaterial ? 'Uploading...' : '📤 Upload to Class'}
+                </button>
+              </form>
+            )}
+          </div>
+
+          <aside className="create-class-panel glass-panel" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 12 }}>
+            <p className="eyebrow">Pro tip</p>
+            <h2 style={{ fontSize: '1.25rem' }}>Slides stay after class</h2>
+            <p style={{ color: '#94a3b8', fontSize: '0.88rem', lineHeight: 1.7 }}>
+              Files you upload are saved permanently and accessible to all enrolled students whenever they view the class.
+            </p>
           </aside>
         </section>
 

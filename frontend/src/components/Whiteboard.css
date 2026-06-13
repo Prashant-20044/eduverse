@@ -3,14 +3,15 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  min-height: 420px;
+  min-height: 480px;
   overflow: hidden;
-  background:
-    linear-gradient(rgba(37, 99, 235, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(37, 99, 235, 0.035) 1px, transparent 1px),
-    #ffffff;
-  background-size: 28px 28px;
-  border-radius: 12px;
+  background-color: #fafafa;
+  background-image: radial-gradient(#e5e7eb 1.5px, transparent 1.5px);
+  background-size: 20px 20px;
+  border-radius: 16px;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
 }
 
 .whiteboard-scroll-area {
@@ -19,306 +20,386 @@
   flex: 1;
   overflow: auto;
   overscroll-behavior: contain;
-  scrollbar-color: rgba(37, 99, 235, 0.55) rgba(226, 232, 240, 0.75);
+  scrollbar-color: rgba(71, 85, 105, 0.3) transparent;
   scrollbar-width: thin;
 }
 
 .whiteboard-scroll-area::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
 }
 
 .whiteboard-scroll-area::-webkit-scrollbar-track {
-  background: rgba(226, 232, 240, 0.75);
+  background: transparent;
 }
 
 .whiteboard-scroll-area::-webkit-scrollbar-thumb {
-  background: rgba(37, 99, 235, 0.55);
+  background: rgba(71, 85, 105, 0.2);
   border-radius: 999px;
 }
 
-.whiteboard-toolbar {
-  position: absolute;
-  top: 14px;
-  left: 14px;
-  right: 14px;
-  z-index: 5;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px;
-  overflow-x: auto;
-  background: rgba(15, 23, 42, 0.9);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 10px;
-  box-shadow: 0 14px 35px rgba(15, 23, 42, 0.22);
-  backdrop-filter: blur(14px);
+.whiteboard-scroll-area::-webkit-scrollbar-thumb:hover {
+  background: rgba(71, 85, 105, 0.35);
 }
 
-.whiteboard-tool-section {
+/* Central Floating Top Toolbar */
+.wb-floating-toolbar {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
   display: flex;
   align-items: center;
   gap: 6px;
-  flex: 0 0 auto;
+  padding: 6px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 12px 24px -4px rgba(0, 0, 0, 0.08), 0 4px 12px -2px rgba(0, 0, 0, 0.03);
+  backdrop-filter: blur(8px);
 }
 
-.whiteboard-tool-section:not(:last-child),
-.size-control {
-  padding-right: 10px;
-  border-right: 1px solid rgba(255, 255, 255, 0.12);
-}
-
-.whiteboard-tool-btn,
-.whiteboard-action-btn {
-  display: inline-flex;
+.wb-tool-btn {
+  display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 42px;
-  height: 34px;
-  padding: 0 10px;
-  color: #e5e7eb;
-  font-size: 0.78rem;
-  font-weight: 700;
-  line-height: 1;
-  white-space: nowrap;
+  width: 38px;
+  height: 38px;
+  color: #475569;
   background: transparent;
   border: 1px solid transparent;
-  border-radius: 7px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+  transition: all 0.2s ease;
 }
 
-.whiteboard-tool-btn:hover,
-.whiteboard-action-btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.12);
+.wb-tool-btn:hover {
+  background: #f1f5f9;
+  color: #0f172a;
 }
 
-.whiteboard-tool-btn.active {
+.wb-tool-btn.active {
+  background: #ede9fe;
+  color: #6d28d9;
+  border-color: #ddd6fe;
+}
+
+.wb-separator {
+  width: 1px;
+  height: 24px;
+  background: #e2e8f0;
+  margin: 0 4px;
+}
+
+.wb-separator-h {
+  height: 1px;
+  background: #e2e8f0;
+  margin: 12px 0;
+  width: 100%;
+}
+
+/* Left Properties Panel */
+.wb-properties-panel {
+  position: absolute;
+  top: 76px;
+  left: 16px;
+  z-index: 10;
+  width: 220px;
+  padding: 16px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: calc(100% - 160px);
+  overflow-y: auto;
+}
+
+.wb-panel-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #64748b;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+
+.wb-color-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  align-items: center;
+}
+
+.wb-color-swatch {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 0 1px #cbd5e1;
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.wb-color-swatch:hover {
+  transform: scale(1.05);
+}
+
+.wb-color-swatch.active {
+  box-shadow: 0 0 0 2px #6d28d9;
+  transform: scale(1.05);
+}
+
+.wb-custom-color-wrapper {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px #cbd5e1;
+  cursor: pointer;
+}
+
+.wb-custom-color-input {
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+.wb-custom-color-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   color: #ffffff;
-  background: #2563eb;
-  border-color: rgba(255, 255, 255, 0.2);
+  pointer-events: none;
+  mix-blend-mode: difference;
 }
 
-/* Hover-draw mode toggle button */
-.whiteboard-tool-btn.hover-draw-btn {
+.wb-option-group {
+  display: flex;
   gap: 4px;
-  letter-spacing: 0.01em;
+  background: #f1f5f9;
+  padding: 3px;
+  border-radius: 8px;
 }
 
-.whiteboard-tool-btn.hover-draw-on {
-  color: #fff;
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-  border-color: rgba(251, 191, 36, 0.45);
-  box-shadow:
-    0 0 0 2px rgba(245, 158, 11, 0.25),
-    0 0 14px rgba(245, 158, 11, 0.35);
-  animation: hover-draw-pulse 2s ease-in-out infinite;
+.wb-option-btn {
+  flex: 1;
+  padding: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #475569;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
 }
 
-@keyframes hover-draw-pulse {
-  0%, 100% { box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.25), 0 0 14px rgba(245, 158, 11, 0.35); }
-  50%       { box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.45), 0 0 22px rgba(245, 158, 11, 0.55); }
+.wb-option-btn:hover {
+  color: #0f172a;
 }
 
-.whiteboard-action-btn {
-  background: rgba(255, 255, 255, 0.08);
+.wb-option-btn.active {
+  background: #ffffff;
+  color: #6d28d9;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
-.whiteboard-action-btn.danger {
-  color: #fecaca;
+.wb-size-slider-container {
+  display: flex;
+  align-items: center;
+  width: 100%;
 }
 
-.whiteboard-action-btn.danger:hover:not(:disabled) {
-  color: #ffffff;
-  background: #dc2626;
+.wb-slider {
+  width: 100%;
+  accent-color: #6d28d9;
+  cursor: pointer;
 }
 
-.whiteboard-action-btn:disabled {
-  opacity: 0.42;
+/* Floating Actions Panel (Undo, Redo, Clear) */
+.wb-actions-panel {
+  position: absolute;
+  z-index: 10;
+  display: flex;
+  gap: 6px;
+  padding: 4px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.05);
+}
+
+.wb-actions-panel.bottom-left {
+  bottom: 16px;
+  left: 16px;
+}
+
+.wb-actions-panel.bottom-right {
+  bottom: 16px;
+  right: 16px;
+  align-items: center;
+  padding: 4px 8px;
+}
+
+.wb-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  color: #475569;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.wb-action-btn:hover:not(:disabled) {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.wb-action-btn:disabled {
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
-.color-section {
-  gap: 7px;
+.wb-action-btn.danger:hover {
+  background: #fee2e2;
+  color: #dc2626;
 }
 
-.color-swatch,
-.custom-color {
-  width: 28px;
-  height: 28px;
-  flex: 0 0 28px;
-  padding: 0;
-  overflow: hidden;
-  background: var(--swatch-color);
-  border: 2px solid rgba(255, 255, 255, 0.55);
-  border-radius: 50%;
-  cursor: pointer;
+.wb-action-btn.text-btn {
+  width: auto;
+  height: auto;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 6px 8px;
+  gap: 4px;
 }
 
-.color-swatch.active {
-  outline: 2px solid #ffffff;
-  outline-offset: 2px;
+.wb-vertical-separator {
+  width: 1px;
+  height: 18px;
+  background: #e2e8f0;
+  margin: 0 6px;
 }
 
-.custom-color {
-  background: transparent;
+/* Badges and Viewer status */
+.wb-viewer-badge {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 10;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #ea580c;
+  background: #fff7ed;
+  border: 1px solid #ffedd5;
+  border-radius: 8px;
 }
 
-.custom-color::-webkit-color-swatch-wrapper {
-  padding: 0;
-}
-
-.custom-color::-webkit-color-swatch {
-  border: 0;
-  border-radius: 50%;
-}
-
-.size-control {
+.wb-floating-status {
+  position: absolute;
+  right: 16px;
+  top: 16px;
+  z-index: 10;
   display: flex;
   align-items: center;
   gap: 8px;
-  flex: 0 0 190px;
-  color: #e5e7eb;
-  font-size: 0.78rem;
-  font-weight: 700;
-}
-
-.size-control input {
-  width: 96px;
-  accent-color: #2563eb;
-}
-
-.size-control output {
-  display: inline-flex;
-  justify-content: center;
-  min-width: 26px;
-  color: #ffffff;
-  font-variant-numeric: tabular-nums;
-}
-
-.whiteboard-viewer-badge,
-.whiteboard-status {
-  position: absolute;
-  z-index: 4;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 600;
   color: #475569;
-  font-size: 0.78rem;
-  font-weight: 800;
-  background: rgba(255, 255, 255, 0.86);
-  border: 1px solid rgba(148, 163, 184, 0.35);
-  border-radius: 999px;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.1);
-  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
 }
 
-.whiteboard-viewer-badge {
-  top: 14px;
-  left: 14px;
-  padding: 8px 12px;
-}
-
-.whiteboard-status {
-  right: 14px;
-  bottom: 14px;
-  padding: 7px 11px;
-}
-
-.whiteboard-status span + span {
+.wb-floating-status span + span {
   padding-left: 8px;
-  border-left: 1px solid rgba(148, 163, 184, 0.45);
+  border-left: 1px solid #e2e8f0;
 }
 
-/* Device-type badge inside the status bar */
-.pointer-type-badge {
-  font-size: 0.73rem;
+.wb-pointer-badge {
+  font-size: 10px;
   font-weight: 700;
-  padding: 2px 8px;
-  border-radius: 999px;
-  transition: background 0.2s, color 0.2s;
+  padding: 2px 6px;
+  border-radius: 4px;
 }
 
-.pointer-type-pen {
+.wb-pointer-badge.pen {
   color: #7c3aed;
-  background: rgba(124, 58, 237, 0.1);
+  background: #f5f3ff;
 }
 
-.pointer-type-touch {
+.wb-pointer-badge.touch {
   color: #0891b2;
-  background: rgba(8, 145, 178, 0.1);
+  background: #ecfeff;
 }
 
-.pointer-type-mouse {
-  color: #475569;
-  background: rgba(71, 85, 105, 0.08);
+.wb-pointer-badge.mouse {
+  color: #64748b;
+  background: #f8fafc;
 }
 
+/* Canvas styling */
 .whiteboard-canvas {
   width: 100%;
   display: block;
   touch-action: none;
-  background: #ffffff;
+  background: transparent;
 }
 
 .whiteboard-canvas.is-editable {
   cursor: crosshair;
 }
 
-/* Special cursor in hover-draw mode: small filled circle */
-.whiteboard-canvas.hover-draw-active {
-  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Ccircle cx='10' cy='10' r='5' fill='%23f59e0b' stroke='%23ffffff' stroke-width='2'/%3E%3C/svg%3E") 10 10, crosshair;
-}
-
 .whiteboard-canvas.is-readonly {
   cursor: default;
 }
 
+/* Responsive adjustments */
 @media (max-width: 900px) {
-  .whiteboard-toolbar {
-    align-items: flex-start;
-    flex-wrap: wrap;
-    max-height: 148px;
-  }
-
-  .whiteboard-tool-section:not(:last-child),
-  .size-control {
-    border-right: 0;
-  }
-
-  .whiteboard-tool-btn,
-  .whiteboard-action-btn {
-    min-width: 38px;
-    height: 32px;
-    padding: 0 8px;
-    font-size: 0.74rem;
-  }
-}
-
-@media (max-width: 560px) {
-  .whiteboard-container {
-    min-height: 360px;
-  }
-
-  .whiteboard-toolbar {
+  .wb-floating-toolbar {
     top: 10px;
+    width: 90%;
+    justify-content: center;
+    flex-wrap: wrap;
+    height: auto;
+    padding: 4px;
+  }
+
+  .wb-tool-btn {
+    width: 32px;
+    height: 32px;
+  }
+
+  .wb-properties-panel {
+    top: 110px;
     left: 10px;
-    right: 10px;
-    gap: 8px;
+    width: 180px;
+    max-height: calc(100% - 190px);
   }
 
-  .size-control {
-    flex-basis: 100%;
-  }
-
-  .size-control input {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .whiteboard-status {
-    right: 10px;
-    bottom: 10px;
+  .wb-actions-panel.bottom-right {
+    bottom: 60px;
+    left: 16px;
+    right: auto;
   }
 }
