@@ -44,6 +44,8 @@ const TeacherDashboard = () => {
   const [uploadingMaterial, setUploadingMaterial] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState('');
   const [uploadError, setUploadError] = useState('');
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [showTestModal, setShowTestModal] = useState(false);
 
   const upcomingClasses = useMemo(() => {
     return classes.filter((classItem) => classItem.status !== 'ended');
@@ -110,6 +112,7 @@ const TeacherDashboard = () => {
         setTopic('');
         setDescription('');
         setScheduledAt(getDefaultScheduleTime());
+        setShowScheduleModal(false);
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Could not schedule class.');
@@ -206,6 +209,7 @@ const TeacherDashboard = () => {
         setQuestionsFile(null);
         setAnswerKeyFile(null);
         event.target.reset();
+        setShowTestModal(false);
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Could not create test.');
@@ -286,13 +290,16 @@ const TeacherDashboard = () => {
           </div>
         </section>
 
-        <section className="schedule-layout">
+        <section className="schedule-layout" style={{ gridTemplateColumns: '1fr' }}>
           <div className="schedule-panel glass-panel">
             <div className="section-heading">
               <div>
                 <p className="eyebrow">Schedule</p>
                 <h2>Your classes</h2>
               </div>
+              <button className="btn-primary btn-sm" onClick={() => setShowScheduleModal(true)}>
+                + Schedule New Class
+              </button>
             </div>
 
             {error && <div className="dashboard-error">{error}</div>}
@@ -330,55 +337,6 @@ const TeacherDashboard = () => {
               </div>
             )}
           </div>
-
-          <aside className="create-class-panel glass-panel">
-            <p className="eyebrow">New class</p>
-            <h2>Schedule class</h2>
-            <form onSubmit={handleScheduleClass} className="class-form">
-              <div className="form-group">
-                <label>Topic</label>
-                <input
-                  type="text"
-                  className="input-field"
-                  placeholder="e.g., Algebra foundations"
-                  value={topic}
-                  onChange={(event) => setTopic(event.target.value)}
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Date and time</label>
-                <input
-                  type="datetime-local"
-                  className="input-field"
-                  value={scheduledAt}
-                  onChange={(event) => setScheduledAt(event.target.value)}
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Description</label>
-                <textarea
-                  className="input-field textarea-field"
-                  placeholder="Short notes for this class"
-                  value={description}
-                  onChange={(event) => setDescription(event.target.value)}
-                />
-              </div>
-
-              <button type="submit" className="btn-primary btn-full" disabled={saving || startingNow}>
-                {saving ? 'Scheduling...' : 'Add to Schedule'}
-              </button>
-              <button
-                type="button"
-                className="btn-outline btn-full"
-                onClick={handleStartNow}
-                disabled={saving || startingNow}
-              >
-                {startingNow ? 'Starting...' : 'Start Now'}
-              </button>
-            </form>
-          </aside>
         </section>
 
         <section className="schedule-layout">
@@ -444,13 +402,16 @@ const TeacherDashboard = () => {
           </aside>
         </section>
 
-        <section className="tests-layout">
+        <section className="tests-layout" style={{ gridTemplateColumns: '1fr' }}>
           <div className="schedule-panel glass-panel">
             <div className="section-heading">
               <div>
                 <p className="eyebrow">Assessment</p>
                 <h2>Your tests</h2>
               </div>
+              <button className="btn-primary btn-sm" onClick={() => setShowTestModal(true)}>
+                + Upload New MCQ Test
+              </button>
             </div>
 
             {loading ? (
@@ -480,10 +441,76 @@ const TeacherDashboard = () => {
               </div>
             )}
           </div>
+        </section>
+      </main>
 
-          <aside className="create-class-panel glass-panel">
+      {/* Schedule Class Modal */}
+      {showScheduleModal && (
+        <div className="dashboard-modal-overlay" onClick={() => setShowScheduleModal(false)}>
+          <div className="dashboard-modal-container" onClick={e => e.stopPropagation()}>
+            <button className="dashboard-modal-close" onClick={() => setShowScheduleModal(false)}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+            <p className="eyebrow">New class</p>
+            <h2 style={{ fontSize: '1.75rem', marginBottom: '1.5rem', fontWeight: '900' }}>Schedule class</h2>
+            <form onSubmit={handleScheduleClass} className="class-form">
+              <div className="form-group">
+                <label>Topic</label>
+                <input
+                  type="text"
+                  className="input-field"
+                  placeholder="e.g., Algebra foundations"
+                  value={topic}
+                  onChange={(event) => setTopic(event.target.value)}
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Date and time</label>
+                <input
+                  type="datetime-local"
+                  className="input-field"
+                  value={scheduledAt}
+                  onChange={(event) => setScheduledAt(event.target.value)}
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Description</label>
+                <textarea
+                  className="input-field textarea-field"
+                  placeholder="Short notes for this class"
+                  value={description}
+                  onChange={(event) => setDescription(event.target.value)}
+                />
+              </div>
+
+              <button type="submit" className="btn-primary btn-full" disabled={saving || startingNow}>
+                {saving ? 'Scheduling...' : 'Add to Schedule'}
+              </button>
+              <button
+                type="button"
+                className="btn-outline btn-full"
+                style={{ marginTop: '0.75rem' }}
+                onClick={handleStartNow}
+                disabled={saving || startingNow}
+              >
+                {startingNow ? 'Starting...' : 'Start Now'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Upload MCQ Modal */}
+      {showTestModal && (
+        <div className="dashboard-modal-overlay" onClick={() => setShowTestModal(false)}>
+          <div className="dashboard-modal-container" onClick={e => e.stopPropagation()}>
+            <button className="dashboard-modal-close" onClick={() => setShowTestModal(false)}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
             <p className="eyebrow">New test</p>
-            <h2>Upload MCQs</h2>
+            <h2 style={{ fontSize: '1.75rem', marginBottom: '1.5rem', fontWeight: '900' }}>Upload MCQs</h2>
             <form onSubmit={handleCreateTest} className="class-form">
               <div className="form-group">
                 <label>Title</label>
@@ -525,7 +552,7 @@ const TeacherDashboard = () => {
                   accept=".json,.csv,.txt"
                   onChange={(event) => setQuestionsFile(event.target.files?.[0] || null)}
                 />
-                <span className="text-muted">Use: Question | Option A | Option B | Option C | Option D</span>
+                <span className="text-muted" style={{ display: 'block', marginTop: '4px', fontSize: '0.8rem' }}>Use: Question | Option A | Option B | Option C | Option D</span>
               </div>
 
               <div className="form-group">
@@ -536,16 +563,16 @@ const TeacherDashboard = () => {
                   accept=".json,.csv,.txt"
                   onChange={(event) => setAnswerKeyFile(event.target.files?.[0] || null)}
                 />
-                <span className="text-muted">Use one answer per line, like 1:A or A.</span>
+                <span className="text-muted" style={{ display: 'block', marginTop: '4px', fontSize: '0.8rem' }}>Use one answer per line, like 1:A or A.</span>
               </div>
 
               <button type="submit" className="btn-primary btn-full" disabled={savingTest}>
                 {savingTest ? 'Publishing...' : 'Publish Test'}
               </button>
             </form>
-          </aside>
-        </section>
-      </main>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
