@@ -17,7 +17,8 @@ import {
   ArrowUp,
   ArrowDown,
   Sparkles,
-  MousePointerClick
+  MousePointerClick,
+  Palette
 } from 'lucide-react';
 import './Whiteboard.css';
 
@@ -67,12 +68,13 @@ const Whiteboard = ({ socket, roomId, isTeacher, onSnapshotSaved }) => {
   const [isSavingSnapshot, setIsSavingSnapshot] = useState(false);
   // Tracks the last seen pointer device type for the status indicator
   const [activePointerType, setActivePointerType] = useState(null);
-  // Tracks whether the pointer is physically pressed (for non-hover mode)
   const isPointerDownRef = useRef(false);
-  // Tracks whether hover-draw is currently active (pointer inside canvas)
   const hoverDrawActiveRef = useRef(false);
-  // Tracks whether a pen/touch pressure-stroke is in progress
   const pressureDrawingRef = useRef(false);
+  
+  const [showStyles, setShowStyles] = useState(false);
+  const [textInput, setTextInput] = useState({ active: false, x: 0, y: 0, text: '' });
+  const textInputRef = useRef(null);
 
   const canUndo = historyCount > 0;
   const canRedo = redoCount > 0;
@@ -352,19 +354,13 @@ const Whiteboard = ({ socket, roomId, isTeacher, onSnapshotSaved }) => {
     const point = getPoint(event);
 
     if (tool === 'text') {
-      const text = window.prompt('Enter text');
-      if (!text?.trim()) return;
-
-      const action = {
-        type: 'text',
-        tool,
-        color,
-        size,
-        point,
-        text: text.trim(),
-      };
-      drawAction(action);
-      pushAction(action);
+      if (textInput.active) {
+        commitText();
+      }
+      setTextInput({ active: true, x: point.x, y: point.y, text: '' });
+      setTimeout(() => {
+        if (textInputRef.current) textInputRef.current.focus();
+      }, 0);
       return;
     }
 
@@ -641,6 +637,23 @@ const Whiteboard = ({ socket, roomId, isTeacher, onSnapshotSaved }) => {
     }
   };
 
+  const commitText = useCallback(() => {
+    if (!textInput.active) return;
+    if (textInput.text.trim()) {
+      const action = {
+        type: 'text',
+        tool: 'text',
+        color,
+        size,
+        point: { x: textInput.x, y: textInput.y },
+        text: textInput.text.trim(),
+      };
+      drawAction(action);
+      pushAction(action);
+    }
+    setTextInput({ active: false, x: 0, y: 0, text: '' });
+  }, [textInput, color, size, drawAction, pushAction]);
+
   const getToolIcon = (toolKey) => {
     switch (toolKey) {
       case 'pen': return <Pencil size={18} />;
@@ -681,9 +694,21 @@ const Whiteboard = ({ socket, roomId, isTeacher, onSnapshotSaved }) => {
             >
               <MousePointerClick size={18} />
             </button>
+
+            <div className="wb-separator" />
+
+            <button
+              className={`wb-tool-btn ${showStyles ? 'active' : ''}`}
+              onClick={() => setShowStyles(prev => !prev)}
+              type="button"
+              title="Toggle Styles Box"
+            >
+              <Palette size={18} />
+            </button>
           </div>
 
           {/* Left Properties Panel */}
+          {showStyles && (
           <div className="wb-properties-panel">
             <div className="wb-panel-title">Stroke Color</div>
             <div className="wb-color-grid">
@@ -777,6 +802,7 @@ const Whiteboard = ({ socket, roomId, isTeacher, onSnapshotSaved }) => {
               />
             </div>
           </div>
+          )}
 
           {/* Bottom Left Undo/Redo/Clear Panel */}
           <div className="wb-actions-panel bottom-left">
@@ -880,6 +906,42 @@ const Whiteboard = ({ socket, roomId, isTeacher, onSnapshotSaved }) => {
           onPointerLeave={finishDrawing}
           onPointerEnter={handlePointerEnter}
         />
+        {textInput.active && (
+          <textarea
+            ref={textInputRef}
+            value={textInput.text}
+            onChange={(e) => setTextInput(prev => ({ ...prev, text: e.target.value }))}
+            onBlur={commitText}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                commitText();
+              }
+              if (e.key === 'Escape') {
+                setTextInput({ active: false, x: 0, y: 0, text: '' });
+              }
+            }}
+            style={{
+              position: 'absolute',
+              left: textInput.x,
+              top: textInput.y,
+              color: color,
+              font: `bold ${Math.max(size * 4, 18)}px "Comic Sans MS", "Architects Daughter", cursive, sans-serif`,
+              background: 'transparent',
+              border: '1px dashed #94a3b8',
+              outline: 'none',
+              padding: 0,
+              margin: 0,
+              resize: 'none',
+              overflow: 'visible',
+              whiteSpace: 'pre',
+              minWidth: '50px',
+              minHeight: '1.2em',
+              zIndex: 100,
+              lineHeight: 1
+            }}
+          />
+        )}
       </div>
     </section>
   );
