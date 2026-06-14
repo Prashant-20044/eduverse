@@ -155,9 +155,7 @@ const LiveClassRoom = () => {
       const formData = new FormData();
       formData.append('file', file);
 
-      const res = await axios.post(`/api/upload/material/${classId}`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      const res = await axios.post(`/api/upload/material/${classId}`, formData);
 
       if (res.data.success) {
         const material = res.data.material;
