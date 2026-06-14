@@ -177,9 +177,9 @@ const LiveClassRoom = () => {
     }
   };
 
-  const whiteboardSnapshots = classMaterials.filter((material) => material.type === 'whiteboard-snapshot');
+  const whiteboardSnapshots = classMaterials.filter((material) => material.fileType === 'whiteboard-snapshot');
   const notesPdfs = classMaterials.filter((material) => (
-    material.type === 'whiteboard-notes-pdf' || material.type === 'pdf'
+    material.fileType === 'whiteboard-notes-pdf' || material.fileType === 'pdf'
   ));
   const shouldShowMaterials = whiteboardSnapshots.length > 0 || notesPdfs.length > 0 || isTeacher;
 
@@ -267,7 +267,7 @@ const LiveClassRoom = () => {
                     className="notes-download-link"
                     style={{ marginTop: 6 }}
                   >
-                    <span>{broadcastedPpt.type?.toUpperCase() || 'FILE'}</span>
+                    <span>{broadcastedPpt.fileType?.toUpperCase() || 'FILE'}</span>
                     {broadcastedPpt.filename || 'Broadcast file'}
                   </a>
                 </div>
@@ -287,7 +287,7 @@ const LiveClassRoom = () => {
                 rel="noreferrer"
                 className="notes-download-link"
               >
-                <span>{broadcastedPpt.type?.toUpperCase() || 'FILE'}</span>
+                <span>{broadcastedPpt.fileType?.toUpperCase() || 'FILE'}</span>
                 {broadcastedPpt.filename || 'Class slides'}
               </a>
             </section>

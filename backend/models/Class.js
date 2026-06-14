@@ -24,10 +24,10 @@ const classSchema = new mongoose.Schema({
     default: 'scheduled'
   },
   materials: [{
-    url: String, // Cloudinary URL
-    publicId: String,
-    filename: String,
-    type: String // e.g., 'image', 'video', 'pdf'
+    url: { type: String }, // Cloudinary URL
+    publicId: { type: String },
+    filename: { type: String },
+    fileType: { type: String } // e.g., 'image', 'video', 'pdf', 'whiteboard-snapshot', 'whiteboard-notes-pdf'
   }],
   recordingUrl: {
     type: String, // Path or URL to the finished stream recording

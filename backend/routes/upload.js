@@ -21,11 +21,17 @@ const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: async (req, file) => {
     let folder = 'coaching_materials';
-    let resource_type = 'auto'; // automatically detect if image or video/raw
-    
-    // For PPTs/PDFs, they might be handled as raw or image (if PDF)
-    if (file.mimetype === 'application/pdf') {
-      resource_type = 'image'; // Cloudinary can convert PDF pages to images
+    let resource_type = 'auto'; // automatically detect if image or video
+
+    // PDFs and PPTs must be uploaded as 'raw' to get a real download URL
+    const isDocument = [
+      'application/pdf',
+      'application/vnd.ms-powerpoint',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+    ].includes(file.mimetype);
+
+    if (isDocument) {
+      resource_type = 'raw';
     }
 
     return {
@@ -116,7 +122,15 @@ router.post('/material/:classId', protect, upload.single('file'), async (req, re
       url: req.file.path,
       publicId: req.file.filename,
       filename: req.file.originalname,
-      type: req.file.mimetype.includes('pdf') ? 'pdf' : (req.file.mimetype.includes('image') ? 'image' : 'raw')
+      fileType: req.file.mimetype.includes('pdf')
+        ? 'pdf'
+        : (req.file.mimetype.includes('image')
+          ? 'image'
+          : (req.file.mimetype.includes('presentation') || req.file.mimetype.includes('powerpoint')
+            ? 'ppt'
+            : 'raw'
+          )
+        )
     };
 
     classObj.materials.push(newMaterial);
@@ -162,7 +176,7 @@ router.post('/whiteboard/:classId', protect, async (req, res) => {
       url: uploadResult.secure_url,
       publicId: uploadResult.public_id,
       filename: safeFilename,
-      type: 'whiteboard-snapshot'
+      fileType: 'whiteboard-snapshot'
     };
 
     classObj.materials.push(newMaterial);
@@ -192,7 +206,7 @@ router.post('/whiteboard-notes/:classId', protect, async (req, res) => {
       return res.status(403).json({ success: false, message: 'You can only generate notes for your own classes' });
     }
 
-    const snapshots = classObj.materials.filter((material) => material.type === 'whiteboard-snapshot');
+    const snapshots = classObj.materials.filter((material) => material.fileType === 'whiteboard-snapshot');
     if (!snapshots.length) {
       return res.status(400).json({ success: false, message: 'Save at least one whiteboard snapshot before generating PDF notes' });
     }
@@ -211,7 +225,7 @@ router.post('/whiteboard-notes/:classId', protect, async (req, res) => {
       url: uploadResult.secure_url,
       publicId: uploadResult.public_id,
       filename: `${classObj.topic || 'class'}-whiteboard-notes.pdf`,
-      type: 'whiteboard-notes-pdf'
+      fileType: 'whiteboard-notes-pdf'
     };
 
     classObj.materials.push(newMaterial);
