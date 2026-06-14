@@ -40,3 +40,6 @@ yarn-error.log*
 *.sqlite
 frontend/*.log
 backend/*.log
+
+# Local project docs (not for version control)
+BUGLOG.md
