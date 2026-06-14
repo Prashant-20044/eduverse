@@ -233,9 +233,7 @@ const TeacherDashboard = () => {
     formData.append('file', uploadFile);
 
     try {
-      const res = await axios.post(`${API_URL}/upload/material/${uploadClassId}`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      const res = await axios.post(`${API_URL}/upload/material/${uploadClassId}`, formData);
       if (res.data.success) {
         setUploadSuccess(`✅ "${res.data.material.filename}" uploaded successfully! Students can now access it.`);
         setUploadFile(null);
