@@ -119,12 +119,13 @@ router.post('/material/:classId', protect, upload.single('file'), async (req, re
     }
 
     // Normalize file properties coming from multer-storage-cloudinary
-    const publicId = req.file.filename || req.file.public_id || req.file.publicId || req.file.publicname || '';
+    const publicId = req.file.publicId || req.file.filename || req.file.public_id || req.file.publicname || '';
     const mimetype = req.file.mimetype || '';
+    const filename = req.file.originalname || req.file.originalName || req.file.filename || '';
     const newMaterial = {
       url: req.file.path,
       publicId: publicId,
-      filename: req.file.originalname || req.file.originalName || req.file.originalname || '',
+      filename: filename,
       fileType: mimetype.includes('pdf')
         ? 'pdf'
         : (mimetype.includes('image')
