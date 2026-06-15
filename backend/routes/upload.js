@@ -118,15 +118,18 @@ router.post('/material/:classId', protect, upload.single('file'), async (req, re
       return res.status(400).json({ success: false, message: 'No file uploaded' });
     }
 
+    // Normalize file properties coming from multer-storage-cloudinary
+    const publicId = req.file.filename || req.file.public_id || req.file.publicId || req.file.publicname || '';
+    const mimetype = req.file.mimetype || '';
     const newMaterial = {
       url: req.file.path,
-      publicId: req.file.filename,
-      filename: req.file.originalname,
-      fileType: req.file.mimetype.includes('pdf')
+      publicId: publicId,
+      filename: req.file.originalname || req.file.originalName || req.file.originalname || '',
+      fileType: mimetype.includes('pdf')
         ? 'pdf'
-        : (req.file.mimetype.includes('image')
+        : (mimetype.includes('image')
           ? 'image'
-          : (req.file.mimetype.includes('presentation') || req.file.mimetype.includes('powerpoint')
+          : (mimetype.includes('presentation') || mimetype.includes('powerpoint')
             ? 'ppt'
             : 'raw'
           )
@@ -138,8 +141,9 @@ router.post('/material/:classId', protect, upload.single('file'), async (req, re
 
     res.json({ success: true, material: newMaterial, class: classObj });
   } catch (err) {
-    console.error('Upload error:', err);
-    res.status(500).json({ success: false, message: 'Upload failed' });
+    console.error('Upload error:', err && err.stack ? err.stack : err);
+    // Return error message for easier debugging during development
+    res.status(500).json({ success: false, message: 'Upload failed', error: err && err.message ? err.message : String(err) });
   }
 });
 
