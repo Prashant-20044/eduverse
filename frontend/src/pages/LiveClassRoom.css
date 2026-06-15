@@ -222,6 +222,19 @@
   border-color: rgba(147, 197, 253, 0.5);
 }
 
+.material-action-link {
+  width: 100%;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+}
+
+.material-action-link.is-active {
+  border-color: rgba(16, 185, 129, 0.55);
+  background: rgba(6, 78, 59, 0.38);
+}
+
 .broadcast-viewer-container {
   flex: 1 1 auto;
   min-height: 420px;
@@ -265,6 +278,13 @@
 
 .broadcast-viewer-container .materials-heading {
   margin-bottom: 0;
+}
+
+.broadcast-filename {
+  max-width: min(42vw, 520px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .notes-download-link span {

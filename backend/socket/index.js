@@ -1,4 +1,5 @@
 const whiteboardStates = new Map();
+const activeBroadcasts = new Map();
 
 const getEmptyBoardState = () => ({
   history: [],
@@ -37,6 +38,10 @@ module.exports = (io) => {
       socket.to(roomId).emit('user-connected', { userId, userName, role, socketId: socket.id });
 
       socket.emit('sync-board', whiteboardStates.get(roomId) || getEmptyBoardState());
+      const activeBroadcast = activeBroadcasts.get(roomId);
+      if (activeBroadcast) {
+        socket.emit('ppt-broadcasted', activeBroadcast);
+      }
 
       socket.on('disconnect', async () => {
         console.log(`User ${userName} disconnected from room ${roomId}`);
@@ -48,6 +53,7 @@ module.exports = (io) => {
             const Class = require('../models/Class');
             await Class.findByIdAndUpdate(roomId, { status: 'ended' });
             whiteboardStates.delete(roomId);
+            activeBroadcasts.delete(roomId);
             console.log(`Class ${roomId} auto-ended due to teacher disconnect.`);
             
             // Notify other clients in the room that the stream ended
@@ -131,7 +137,14 @@ module.exports = (io) => {
     // --- PPT/PDF Broadcast ---
     socket.on('ppt-broadcast', (roomId, material) => {
       console.log(`ppt-broadcast event in room ${roomId}: ${material?.filename}`);
-      socket.to(roomId).emit('ppt-broadcasted', material);
+      activeBroadcasts.set(roomId, material);
+      io.to(roomId).emit('ppt-broadcasted', material);
+    });
+
+    socket.on('ppt-broadcast-stop', (roomId) => {
+      console.log(`ppt-broadcast-stop event in room ${roomId}`);
+      activeBroadcasts.delete(roomId);
+      io.to(roomId).emit('ppt-broadcast-stopped');
     });
 
     // --- Notifications ---
