@@ -180,6 +180,12 @@ const LiveClassRoom = () => {
     material.fileType === 'whiteboard-notes-pdf' || material.fileType === 'pdf'
   ));
   const shouldShowMaterials = whiteboardSnapshots.length > 0 || notesPdfs.length > 0 || isTeacher;
+  const isBroadcastPdf = broadcastedPpt?.fileType === 'pdf' || broadcastedPpt?.filename?.toLowerCase().endsWith('.pdf');
+  const isBroadcastOffice = broadcastedPpt?.fileType === 'ppt' || broadcastedPpt?.filename?.toLowerCase().endsWith('.ppt') || broadcastedPpt?.filename?.toLowerCase().endsWith('.pptx');
+  const broadcastViewerUrl = broadcastedPpt?.url;
+  const officeViewerUrl = broadcastedPpt && isBroadcastOffice
+    ? `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(broadcastedPpt.url)}`
+    : null;
 
   if (!user) return null;
 
@@ -241,12 +247,57 @@ const LiveClassRoom = () => {
         </div>
 
         <div className="right-panel">
-          <Whiteboard
-            socket={socket}
-            roomId={classId}
-            isTeacher={isTeacher}
-            onSnapshotSaved={handleSnapshotSaved}
-          />
+          {broadcastedPpt ? (
+            <section className="broadcast-viewer-container glass-panel" aria-label="Teacher broadcasted slides">
+              <div className="materials-heading">
+                <h3>📚 Teacher Broadcast</h3>
+                <div className="materials-heading-actions">
+                  <span>{broadcastedPpt.filename || 'Live Slides'}</span>
+                  {isTeacher && (
+                    <button
+                      className="btn-stop-broadcast"
+                      onClick={() => setBroadcastedPpt(null)}
+                      title="Stop broadcast and return to whiteboard"
+                    >
+                      ✕ Stop
+                    </button>
+                  )}
+                </div>
+              </div>
+              {isBroadcastPdf ? (
+                <iframe
+                  title="Broadcasted PDF"
+                  src={broadcastViewerUrl}
+                  className="broadcast-iframe"
+                />
+              ) : isBroadcastOffice ? (
+                <iframe
+                  title="Broadcasted PPT"
+                  src={officeViewerUrl}
+                  className="broadcast-iframe"
+                />
+              ) : (
+                <div className="broadcast-file-fallback">
+                  <p>Live slide broadcast is available.</p>
+                  <a
+                    href={broadcastedPpt.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="notes-download-link"
+                  >
+                    Open file directly
+                  </a>
+                </div>
+              )}
+            </section>
+          ) : (
+            <Whiteboard
+              socket={socket}
+              roomId={classId}
+              isTeacher={isTeacher}
+              onSnapshotSaved={handleSnapshotSaved}
+            />
+          )}
 
           {/* PPT/PDF Broadcast Status - teacher uploads from navbar, but shows status here */}
           {isTeacher && (pptError || broadcastedPpt) && (
@@ -273,7 +324,6 @@ const LiveClassRoom = () => {
             </section>
           )}
 
-          {/* Student: Show broadcasted PPT if teacher shared one */}
           {!isTeacher && broadcastedPpt && (
             <section className="class-materials-panel glass-panel" aria-label="Shared slides">
               <div className="materials-heading">
