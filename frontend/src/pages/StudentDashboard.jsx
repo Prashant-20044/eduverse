@@ -41,8 +41,10 @@ const StudentDashboard = () => {
         }
         if (materialsRes.data.success) {
           setMaterials(materialsRes.data.classes);
+          console.log('Materials loaded:', materialsRes.data.classes);
         }
       } catch (err) {
+        console.error('Dashboard fetch error:', err);
         setTestError(err.response?.data?.message || 'Could not load student dashboard.');
       }
     };
