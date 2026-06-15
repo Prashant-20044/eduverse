@@ -182,7 +182,13 @@ const LiveClassRoom = () => {
   const shouldShowMaterials = whiteboardSnapshots.length > 0 || notesPdfs.length > 0 || isTeacher;
   const isBroadcastPdf = broadcastedPpt?.fileType === 'pdf' || broadcastedPpt?.filename?.toLowerCase().endsWith('.pdf');
   const isBroadcastOffice = broadcastedPpt?.fileType === 'ppt' || broadcastedPpt?.filename?.toLowerCase().endsWith('.ppt') || broadcastedPpt?.filename?.toLowerCase().endsWith('.pptx');
-  const broadcastViewerUrl = broadcastedPpt?.url;
+  
+  // Google Docs Viewer for PDF embedding (no download, viewer integrated)
+  const pdfViewerUrl = broadcastedPpt && isBroadcastPdf
+    ? `https://docs.google.com/viewer?url=${encodeURIComponent(broadcastedPpt.url)}&embedded=true`
+    : null;
+  
+  // Office Online embed for PPT
   const officeViewerUrl = broadcastedPpt && isBroadcastOffice
     ? `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(broadcastedPpt.url)}`
     : null;
@@ -267,14 +273,16 @@ const LiveClassRoom = () => {
               {isBroadcastPdf ? (
                 <iframe
                   title="Broadcasted PDF"
-                  src={broadcastViewerUrl}
+                  src={pdfViewerUrl}
                   className="broadcast-iframe"
+                  allow="fullscreen"
                 />
               ) : isBroadcastOffice ? (
                 <iframe
                   title="Broadcasted PPT"
                   src={officeViewerUrl}
                   className="broadcast-iframe"
+                  allow="fullscreen"
                 />
               ) : (
                 <div className="broadcast-file-fallback">
