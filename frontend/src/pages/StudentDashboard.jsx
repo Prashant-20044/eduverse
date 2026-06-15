@@ -11,6 +11,7 @@ const StudentDashboard = () => {
   const navigate = useNavigate();
   const [activeClasses, setActiveClasses] = useState([]);
   const [tests, setTests] = useState([]);
+  const [materials, setMaterials] = useState([]);
   const [testError, setTestError] = useState('');
 
   useEffect(() => {
@@ -22,9 +23,10 @@ const StudentDashboard = () => {
   useEffect(() => {
     const fetchStudentDashboard = async () => {
       try {
-        const [classesRes, testsRes] = await Promise.all([
+        const [classesRes, testsRes, materialsRes] = await Promise.all([
           axios.get('/api/classes/live'),
           axios.get('/api/tests/available'),
+          axios.get('/api/classes/materials/all'),
         ]);
         if (classesRes.data.success) {
           setActiveClasses(classesRes.data.classes.map((classItem) => ({
@@ -36,6 +38,9 @@ const StudentDashboard = () => {
         }
         if (testsRes.data.success) {
           setTests(testsRes.data.tests);
+        }
+        if (materialsRes.data.success) {
+          setMaterials(materialsRes.data.classes);
         }
       } catch (err) {
         setTestError(err.response?.data?.message || 'Could not load student dashboard.');
@@ -142,6 +147,49 @@ const StudentDashboard = () => {
                     {testItem.attempt ? 'Continue Test' : 'Start Test'}
                   </button>
                 )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        <h2 className="section-title test-section-title">Teacher Materials</h2>
+
+        {materials.length === 0 ? (
+          <div className="empty-state glass-panel">
+            <p>No materials have been uploaded yet.</p>
+            <p className="text-muted">Teachers will share slides and notes here.</p>
+          </div>
+        ) : (
+          <div className="materials-container">
+            {materials.map((classItem) => (
+              <div key={classItem._id} className="materials-class-section glass-panel">
+                <div className="materials-class-header">
+                  <div>
+                    <h3>{classItem.topic}</h3>
+                    <p className="materials-teacher-name">by {classItem.teacherId?.name || 'Teacher'}</p>
+                  </div>
+                  <span className="materials-count-badge">{classItem.materials.length} file(s)</span>
+                </div>
+                <div className="materials-list">
+                  {classItem.materials.map((material, index) => (
+                    <a
+                      key={index}
+                      href={material.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="material-item"
+                      title={material.filename}
+                    >
+                      <span className="material-icon">
+                        {material.fileType === 'pdf' && '📄'}
+                        {material.fileType === 'ppt' && '📊'}
+                        {material.fileType === 'image' && '🖼️'}
+                        {!['pdf', 'ppt', 'image'].includes(material.fileType) && '📎'}
+                      </span>
+                      <span className="material-filename">{material.filename}</span>
+                    </a>
+                  ))}
+                </div>
               </div>
             ))}
           </div>

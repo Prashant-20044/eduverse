@@ -50,6 +50,20 @@ router.get('/live', protect, async (req, res) => {
   }
 });
 
+router.get('/materials/all', protect, async (req, res) => {
+  try {
+    // Fetch all classes that have materials
+    const classes = await Class.find({ materials: { $exists: true, $ne: [] } })
+      .populate('teacherId', 'name avatar')
+      .sort({ updatedAt: -1 });
+
+    res.json({ success: true, classes });
+  } catch (err) {
+    console.error('Fetch materials error:', err);
+    res.status(500).json({ success: false, message: 'Could not fetch materials' });
+  }
+});
+
 router.get('/:classId', protect, async (req, res) => {
   try {
     const classObj = await Class.findById(req.params.classId)

@@ -770,3 +770,92 @@ input[type="file"].input-field {
   from { opacity: 0; transform: translateY(20px) scale(0.95); }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
+
+/* Materials Section Styles */
+.materials-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.materials-class-section {
+  padding: 1.5rem;
+  animation: slideUp 0.4s ease-out;
+}
+
+.materials-class-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.materials-class-header h3 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.materials-teacher-name {
+  margin: 0.35rem 0 0;
+  color: #94a3b8;
+  font-size: 0.85rem;
+}
+
+.materials-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 0.75rem;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 20px;
+  color: #6ee7b7;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.materials-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.material-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  color: #cbd5e1;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.material-item:hover {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.3);
+  color: #6ee7b7;
+  transform: translateX(4px);
+}
+
+.material-icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.material-filename {
+  word-break: break-word;
+  font-size: 0.95rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
