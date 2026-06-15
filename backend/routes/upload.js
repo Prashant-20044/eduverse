@@ -101,6 +101,49 @@ const createNotesPdf = async (snapshots, title) => new Promise(async (resolve, r
   }
 });
 
+const createWhiteboardPdf = (imageData, title) => new Promise((resolve, reject) => {
+  try {
+    const matches = imageData.match(/^data:image\/png;base64,(.+)$/);
+    if (!matches) {
+      reject(new Error('Invalid PNG image data'));
+      return;
+    }
+
+    const imageBuffer = Buffer.from(matches[1], 'base64');
+    const document = new PDFDocument({
+      autoFirstPage: false,
+      compress: true,
+      margin: 36,
+      size: 'A4',
+    });
+    const chunks = [];
+
+    document.on('data', (chunk) => chunks.push(chunk));
+    document.on('end', () => resolve(Buffer.concat(chunks)));
+    document.on('error', reject);
+
+    document.info.Title = `${title} - Whiteboard PDF`;
+    document.addPage();
+    document
+      .fontSize(11)
+      .fillColor('#475569')
+      .text(`${title} - Whiteboard`, 36, 22, { align: 'center' });
+
+    document.image(imageBuffer, 36, 52, {
+      fit: [
+        document.page.width - 72,
+        document.page.height - 88,
+      ],
+      align: 'center',
+      valign: 'top',
+    });
+
+    document.end();
+  } catch (err) {
+    reject(err);
+  }
+});
+
 // @route POST /api/upload/material/:classId
 // @desc Upload a material (PPT/PDF/Image) for a specific class
 router.post('/material/:classId', protect, upload.single('file'), async (req, res) => {
@@ -191,6 +234,56 @@ router.post('/whiteboard/:classId', protect, async (req, res) => {
   } catch (err) {
     console.error('Whiteboard snapshot upload error:', err);
     res.status(500).json({ success: false, message: 'Could not save whiteboard snapshot' });
+  }
+});
+
+// @route POST /api/upload/whiteboard-pdf/:classId
+// @desc Save the current whiteboard canvas directly as a PDF material
+router.post('/whiteboard-pdf/:classId', protect, async (req, res) => {
+  try {
+    if (req.user.role !== 'teacher') {
+      return res.status(403).json({ success: false, message: 'Only teachers can save whiteboard PDFs' });
+    }
+
+    const { imageData, filename } = req.body;
+    if (!imageData || !imageData.startsWith('data:image/png;base64,')) {
+      return res.status(400).json({ success: false, message: 'A PNG whiteboard image is required' });
+    }
+
+    const classObj = await Class.findById(req.params.classId);
+    if (!classObj) {
+      return res.status(404).json({ success: false, message: 'Class not found' });
+    }
+
+    if (classObj.teacherId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ success: false, message: 'You can only save PDFs for your own classes' });
+    }
+
+    const pdfBuffer = await createWhiteboardPdf(imageData, classObj.topic || 'Class');
+    const base64Pdf = `data:application/pdf;base64,${pdfBuffer.toString('base64')}`;
+    const timestamp = Date.now();
+    const safeFilename = filename?.trim() || `${classObj.topic || 'class'}-whiteboard-${timestamp}.pdf`;
+    const uploadResult = await cloudinary.uploader.upload(base64Pdf, {
+      folder: 'coaching_whiteboard_notes',
+      resource_type: 'raw',
+      public_id: `${req.params.classId}-whiteboard-${timestamp}`,
+      format: 'pdf',
+    });
+
+    const newMaterial = {
+      url: uploadResult.secure_url,
+      publicId: uploadResult.public_id,
+      filename: safeFilename,
+      fileType: 'whiteboard-notes-pdf'
+    };
+
+    classObj.materials.push(newMaterial);
+    await classObj.save();
+
+    res.json({ success: true, material: newMaterial, class: classObj });
+  } catch (err) {
+    console.error('Whiteboard PDF upload error:', err);
+    res.status(500).json({ success: false, message: 'Could not save whiteboard PDF' });
   }
 });
 

@@ -6,7 +6,12 @@ import { SocketContext } from '../context/SocketContext';
 import VideoStream from '../components/VideoStream';
 import Whiteboard from '../components/Whiteboard';
 import ChatBox from '../components/ChatBox';
+import PdfPresentationViewer from '../components/PdfPresentationViewer';
 import './LiveClassRoom.css';
+
+const DEFAULT_PDF_PRESENTATION_STATE = {
+  scrollRatio: 0,
+};
 
 const LiveClassRoom = () => {
   const { classId } = useParams();
@@ -22,6 +27,7 @@ const LiveClassRoom = () => {
   const [pptFile, setPptFile] = useState(null);
   const [pptError, setPptError] = useState('');
   const [broadcastedPpt, setBroadcastedPpt] = useState(null);
+  const [pdfPresentationState, setPdfPresentationState] = useState(DEFAULT_PDF_PRESENTATION_STATE);
 
   // If a teacher started this from dashboard, state will have isTeacher = true
   // Otherwise we infer from the logged in user's role
@@ -98,6 +104,7 @@ const LiveClassRoom = () => {
     // Listen for PPT/PDF broadcast from teacher
     const handlePptBroadcast = (material) => {
       setBroadcastedPpt(material);
+      setPdfPresentationState(material.presentationState || DEFAULT_PDF_PRESENTATION_STATE);
       setClassMaterials((current) => {
         if (current.some((item) => item.url === material.url)) return current;
         return [...current, material];
@@ -105,16 +112,22 @@ const LiveClassRoom = () => {
     };
     const handlePptBroadcastStopped = () => {
       setBroadcastedPpt(null);
+      setPdfPresentationState(DEFAULT_PDF_PRESENTATION_STATE);
+    };
+    const handlePdfPresentationState = (presentationState) => {
+      setPdfPresentationState(presentationState || DEFAULT_PDF_PRESENTATION_STATE);
     };
 
     socket.on('ppt-broadcasted', handlePptBroadcast);
     socket.on('ppt-broadcast-stopped', handlePptBroadcastStopped);
+    socket.on('pdf-presentation-state', handlePdfPresentationState);
 
     return () => {
       socket.off('whiteboard-snapshot-saved', handleMaterialSaved);
       socket.off('whiteboard-notes-generated', handleMaterialSaved);
       socket.off('ppt-broadcasted', handlePptBroadcast);
       socket.off('ppt-broadcast-stopped', handlePptBroadcastStopped);
+      socket.off('pdf-presentation-state', handlePdfPresentationState);
     };
   }, [socket]);
 
@@ -204,13 +217,19 @@ const LiveClassRoom = () => {
   };
 
   const presentMaterial = (material) => {
-    if (!material || !getViewerUrl(material)) return;
-    setBroadcastedPpt(material);
-    socket?.emit('ppt-broadcast', classId, material);
+    if (!material || (!isPdfMaterial(material) && !getViewerUrl(material))) return;
+    const broadcastMaterial = {
+      ...material,
+      presentationState: DEFAULT_PDF_PRESENTATION_STATE,
+    };
+    setBroadcastedPpt(broadcastMaterial);
+    setPdfPresentationState(DEFAULT_PDF_PRESENTATION_STATE);
+    socket?.emit('ppt-broadcast', classId, broadcastMaterial);
   };
 
   const stopBroadcast = () => {
     setBroadcastedPpt(null);
+    setPdfPresentationState(DEFAULT_PDF_PRESENTATION_STATE);
     socket?.emit('ppt-broadcast-stop', classId);
   };
 
@@ -302,11 +321,12 @@ const LiveClassRoom = () => {
                 </div>
               </div>
               {isBroadcastPdf ? (
-                <iframe
-                  title="Broadcasted PDF"
-                  src={broadcastViewerUrl}
-                  className="broadcast-iframe"
-                  allow="fullscreen"
+                <PdfPresentationViewer
+                  material={broadcastedPpt}
+                  isTeacher={isTeacher}
+                  roomId={classId}
+                  socket={socket}
+                  presentationState={pdfPresentationState}
                 />
               ) : isBroadcastOffice ? (
                 <iframe

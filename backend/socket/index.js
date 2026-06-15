@@ -1,5 +1,8 @@
 const whiteboardStates = new Map();
 const activeBroadcasts = new Map();
+const defaultPdfPresentationState = {
+  scrollRatio: 0,
+};
 
 const getEmptyBoardState = () => ({
   history: [],
@@ -137,8 +140,28 @@ module.exports = (io) => {
     // --- PPT/PDF Broadcast ---
     socket.on('ppt-broadcast', (roomId, material) => {
       console.log(`ppt-broadcast event in room ${roomId}: ${material?.filename}`);
-      activeBroadcasts.set(roomId, material);
-      io.to(roomId).emit('ppt-broadcasted', material);
+      const broadcastMaterial = {
+        ...material,
+        presentationState: material?.presentationState || defaultPdfPresentationState,
+      };
+      activeBroadcasts.set(roomId, broadcastMaterial);
+      io.to(roomId).emit('ppt-broadcasted', broadcastMaterial);
+    });
+
+    socket.on('pdf-presentation-state', (roomId, presentationState) => {
+      const activeBroadcast = activeBroadcasts.get(roomId);
+      const nextState = {
+        scrollRatio: Number(presentationState?.scrollRatio) || 0,
+      };
+
+      if (activeBroadcast) {
+        activeBroadcasts.set(roomId, {
+          ...activeBroadcast,
+          presentationState: nextState,
+        });
+      }
+
+      socket.to(roomId).emit('pdf-presentation-state', nextState);
     });
 
     socket.on('ppt-broadcast-stop', (roomId) => {

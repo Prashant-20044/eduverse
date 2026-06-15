@@ -1,0 +1,56 @@
+.pdf-presentation {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  overflow: hidden;
+  background: #111827;
+  border-radius: 8px;
+}
+
+.pdf-presentation-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 1rem;
+  scrollbar-gutter: stable;
+}
+
+.pdf-presentation.is-student .pdf-presentation-scroll {
+  overflow: hidden;
+  user-select: none;
+}
+
+.pdf-student-guard {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  cursor: default;
+}
+
+.pdf-page-frame {
+  display: flex;
+  justify-content: center;
+  margin: 0 auto 1rem;
+}
+
+.pdf-page-canvas {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  background: #ffffff;
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.28);
+}
+
+.pdf-viewer-loading,
+.pdf-viewer-error {
+  margin: auto;
+  color: #e2e8f0;
+  font-size: 0.92rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.pdf-viewer-error {
+  color: #fecaca;
+}
