@@ -222,6 +222,26 @@ const TeacherDashboard = () => {
     }
   };
 
+  const autoGenerateCredentials = () => {
+    if (!studentName.trim()) {
+      setError('Please enter the student name first to generate a customized email.');
+      return;
+    }
+    const nameStr = studentName.trim().toLowerCase().replace(/[^a-z0-9]+/g, '.');
+    const randomNum = Math.floor(1000 + Math.random() * 9000);
+    const newEmail = `${nameStr}${randomNum}@student.eduverse.com`;
+    
+    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%';
+    let newPassword = '';
+    for (let i = 0; i < 8; i++) {
+      newPassword += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    
+    setStudentEmail(newEmail);
+    setStudentPassword(newPassword);
+    setError('');
+  };
+
   const handleCreateTest = async (event) => {
     event.preventDefault();
     if (!testTitle.trim()) {
@@ -660,6 +680,9 @@ const TeacherDashboard = () => {
             </button>
             <p className="eyebrow">New student</p>
             <h2 style={{ fontSize: '1.75rem', marginBottom: '1.5rem', fontWeight: '900' }}>Register student</h2>
+            
+            {error && <div className="dashboard-error" style={{ marginBottom: '1rem' }}>{error}</div>}
+            
             <form onSubmit={handleCreateStudent} className="class-form">
               <div className="form-group">
                 <label>Student name</label>
@@ -670,6 +693,12 @@ const TeacherDashboard = () => {
                   value={studentName}
                   onChange={(event) => setStudentName(event.target.value)}
                 />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
+                <button type="button" className="btn-outline btn-sm" onClick={autoGenerateCredentials}>
+                  Auto-generate email & password
+                </button>
               </div>
 
               <div className="form-group">
