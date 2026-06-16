@@ -15,6 +15,11 @@ const userSchema = new mongoose.Schema({
     enum: ['teacher', 'student'],
     required: true
   },
+  teacherId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
   // We can add oauthId here if using Google OAuth directly via passport
   oauthId: {
     type: String,

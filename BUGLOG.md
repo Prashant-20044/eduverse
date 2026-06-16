@@ -5,6 +5,140 @@ Format: most recent at the top.
 
 ---
 
+## [BUG-004] Live Class Whiteboard Notes Save and Material Delete Flow Broken
+
+**Date Fixed:** 2026-06-16
+**Severity:** High
+**Area:** Live Classroom + Upload API + Teacher Materials
+
+---
+
+### Problem
+
+In the live class, saving whiteboard snapshots/notes was confusing and unreliable. Teachers had a header action that generated a PDF only after snapshots existed, but no direct way to save the current whiteboard as notes from the board controls. Teachers also could upload PDFs/notes/materials but had no way to delete them if they uploaded the wrong file.
+
+### Root Cause
+
+**Files:**
+- `frontend/src/components/Whiteboard.jsx`
+- `frontend/src/pages/LiveClassRoom.jsx`
+- `frontend/src/pages/TeacherDashboard.jsx`
+- `backend/routes/upload.js`
+
+The frontend did not use the existing direct whiteboard PDF route from the whiteboard toolbar, and saved materials were appended without a shared dedupe/delete flow. The upload API also lacked a teacher-owned material delete endpoint.
+
+### Fix
+
+- Added a whiteboard toolbar **Save Notes** action that saves the current canvas through `/api/upload/whiteboard-pdf/:classId`.
+- Kept snapshot saving as **Save Snap** and relabeled the header PDF action to **Combine Snapshots PDF**.
+- Added `DELETE /api/upload/material/:classId/:materialId` with teacher ownership checks.
+- Added delete buttons for notes, snapshots, and uploaded slides/materials in live class.
+- Added uploaded-material listing and delete buttons to the teacher dashboard resources section.
+- Broadcast material deletes over sockets and clear active broadcasts if the deleted file was currently being presented.
+
+### Testing
+
+- Frontend build passed.
+- Backend JavaScript syntax check passed.
+
+---
+
+## [BUG-003] Late-Joining Students Miss Existing Whiteboard Work
+
+**Date Logged:** 2026-06-16
+**Date Fixed:** 2026-06-13
+**Severity:** High
+**Area:** Backend Socket State + Frontend Whiteboard Sync
+
+---
+
+### Problem
+
+When a teacher wrote on the live whiteboard before a student joined the class, the late-joining student could only see new drawing events after joining. Anything already written on the board was missing from the student's canvas.
+
+**Expected Behavior:**
+- Student joins an already-running live class
+- Student immediately receives the current whiteboard content
+- Student sees the same board history and board height as the teacher
+- Future drawing, undo/redo, resize, and clear events remain synchronized
+
+**Actual Behavior (Before):**
+- Existing whiteboard content was only stored in the teacher's browser state
+- Late-joining students entered with a blank board
+- Only new socket drawing events appeared after the student joined
+
+---
+
+### Root Cause
+
+**Files:**
+- `backend/socket/index.js`
+- `frontend/src/components/Whiteboard.jsx`
+
+The whiteboard socket flow broadcast live drawing events but did not reliably keep a room-level board state that could be replayed to students who joined later. The frontend also needed to request/apply a full board sync when mounting so a late join did not depend only on future `draw-action` events.
+
+---
+
+### Solution Implemented
+
+**File Changes:**
+- `backend/socket/index.js`
+- `frontend/src/components/Whiteboard.jsx`
+
+**Key Changes:**
+
+1. **Room-level whiteboard state on the socket server:**
+   ```js
+   const whiteboardStates = new Map();
+   ```
+   - Stores the latest board `history` and `boardHeight` per class room.
+   - Clears the stored state when the teacher ends/disconnects from the class.
+
+2. **Send current board state to newly joined clients:**
+   ```js
+   socket.emit('sync-board', whiteboardStates.get(roomId) || getEmptyBoardState());
+   ```
+   - Runs during `join-room`, so late students receive the current board immediately.
+
+3. **Explicit board sync request from the whiteboard component:**
+   ```js
+   socket.emit('request-board-sync', roomId);
+   ```
+   - Runs when the whiteboard mounts, covering cases where the component loads after the socket room join.
+
+4. **Persist full board sync payloads:**
+   ```js
+   socket.on('sync-board', (roomId, payload) => {
+     const boardState = normalizeBoardState(payload);
+     whiteboardStates.set(roomId, boardState);
+     socket.to(roomId).emit('sync-board', boardState);
+   });
+   ```
+   - Stores complete board history and height instead of only forwarding individual strokes.
+
+5. **Frontend applies synced history and height:**
+   ```jsx
+   const nextHistory = Array.isArray(payload) ? payload : payload.history || [];
+   const nextBoardHeight = Array.isArray(payload) ? boardHeightRef.current : payload.boardHeight;
+   historyRef.current = nextHistory;
+   ```
+   - Redraws the board from history so the student's canvas matches the teacher's current board.
+
+---
+
+### Testing
+
+**Local Verification:**
+- Teacher writes before student joins -> late student receives existing whiteboard content
+- Teacher continues writing -> student receives live updates
+- Teacher clears board -> stored board state resets and students see the cleared board
+- Board height changes are included in the sync payload
+
+**Commits:**
+- `acb1221` - Update landing UI and auth flow
+
+---
+
 ## [BUG-002] Teacher Slide Broadcast Not Visible to Students in Live Classroom
 
 **Date Fixed:** 2026-06-15

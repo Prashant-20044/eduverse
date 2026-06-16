@@ -321,7 +321,11 @@ router.post(
 
 router.get('/available', protect, ensureStudent, async (req, res) => {
   try {
-    const tests = await Test.find({ isPublished: true })
+    if (!req.user.teacherId) {
+      return res.json({ success: true, tests: [] });
+    }
+
+    const tests = await Test.find({ isPublished: true, teacherId: req.user.teacherId })
       .populate('teacherId', 'name avatar')
       .sort({ createdAt: -1 });
     const attempts = await TestAttempt.find({
@@ -342,7 +346,11 @@ router.get('/available', protect, ensureStudent, async (req, res) => {
 
 router.post('/:testId/start', protect, ensureStudent, async (req, res) => {
   try {
-    const test = await Test.findOne({ _id: req.params.testId, isPublished: true });
+    if (!req.user.teacherId) {
+      return res.status(403).json({ success: false, message: 'You are not enrolled in a coaching' });
+    }
+
+    const test = await Test.findOne({ _id: req.params.testId, isPublished: true, teacherId: req.user.teacherId });
     if (!test) {
       return res.status(404).json({ success: false, message: 'Test not found' });
     }
@@ -363,7 +371,11 @@ router.post('/:testId/start', protect, ensureStudent, async (req, res) => {
 
 router.post('/:testId/retake', protect, ensureStudent, async (req, res) => {
   try {
-    const test = await Test.findOne({ _id: req.params.testId, isPublished: true });
+    if (!req.user.teacherId) {
+      return res.status(403).json({ success: false, message: 'You are not enrolled in a coaching' });
+    }
+
+    const test = await Test.findOne({ _id: req.params.testId, isPublished: true, teacherId: req.user.teacherId });
     if (!test) {
       return res.status(404).json({ success: false, message: 'Test not found' });
     }
@@ -388,6 +400,9 @@ router.post('/:testId/submit', protect, ensureStudent, async (req, res) => {
 
     if (!test || !attempt) {
       return res.status(404).json({ success: false, message: 'Test attempt not found' });
+    }
+    if (test.teacherId.toString() !== req.user.teacherId?.toString()) {
+      return res.status(403).json({ success: false, message: 'You are not enrolled in this coaching' });
     }
     if (attempt.status === 'submitted') {
       return res.json({ success: true, attempt });

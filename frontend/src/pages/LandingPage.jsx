@@ -32,7 +32,6 @@ export default function LandingPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState('student');
   const [loadingRole, setLoadingRole] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [authError, setAuthError] = useState('');
@@ -58,16 +57,16 @@ export default function LandingPage() {
     }
   }, []);
 
-  const handleGoogleSuccess = async (tokenResponse, role) => {
+  const handleGoogleSuccess = async (tokenResponse) => {
     try {
       setAuthError('');
       const userInfo = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
         headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
       });
-      const success = await loginWithOAuth(userInfo.data, role);
+      const success = await loginWithOAuth(userInfo.data, 'teacher');
       if (success) {
         setIsAuthModalOpen(false);
-        navigate(role === 'teacher' ? '/teacher' : '/student');
+        navigate('/teacher');
       }
     } catch (err) {
       console.error('Google login failed', err);
@@ -78,20 +77,14 @@ export default function LandingPage() {
   };
 
   const loginTeacher = useGoogleLogin({
-    onSuccess: (codeResponse) => handleGoogleSuccess(codeResponse, 'teacher'),
+    onSuccess: (codeResponse) => handleGoogleSuccess(codeResponse),
     onError: (error) => { console.error('Login Failed:', error); setLoadingRole(null); }
   });
 
-  const loginStudent = useGoogleLogin({
-    onSuccess: (codeResponse) => handleGoogleSuccess(codeResponse, 'student'),
-    onError: (error) => { console.error('Login Failed:', error); setLoadingRole(null); }
-  });
-
-  const handleGoogleLoginClick = (role) => {
-    setLoadingRole(role);
+  const handleGoogleLoginClick = () => {
+    setLoadingRole('teacher');
     setAuthError('');
-    if (role === 'teacher') loginTeacher();
-    else loginStudent();
+    loginTeacher();
   };
 
   const handleCustomSubmit = async (e) => {
@@ -121,10 +114,10 @@ export default function LandingPage() {
           setAuthError(res.message);
         }
       } else {
-        const res = await signupWithCredentials(name, email, password, role);
+        const res = await signupWithCredentials(name, email, password);
         if (res.success) {
           setIsAuthModalOpen(false);
-          navigate(res.user.role === 'teacher' ? '/teacher' : '/student');
+          navigate('/teacher');
         } else {
           setAuthError(res.message);
         }
@@ -137,9 +130,8 @@ export default function LandingPage() {
     }
   };
 
-  const openAuth = (tab = 'login', initialRole = 'student') => {
+  const openAuth = (tab = 'login') => {
     setActiveTab(tab);
-    setRole(initialRole);
     setAuthError('');
     setIsAuthModalOpen(true);
   };
@@ -315,7 +307,7 @@ export default function LandingPage() {
             </div>
 
             <p className="text-gray-400 mt-8 text-xl leading-relaxed">
-              Unleash your potential with conceptual live learning paths and real-time validation.
+              Join live classes, tests, and materials using the login credentials provided by your coaching.
             </p>
 
             <div className="w-20 h-px bg-green-500/30 my-10" />
@@ -337,10 +329,10 @@ export default function LandingPage() {
             </ul>
 
             <button
-              onClick={() => openAuth('signup', 'student')}
+              onClick={() => openAuth('login')}
               className="mt-14 inline-flex min-h-[84px] min-w-[300px] items-center justify-center gap-7 bg-green-600/10 hover:bg-green-600/20 border border-green-500/30 text-green-300 hover:text-white px-20 py-7 rounded-2xl font-extrabold text-xl tracking-wide transition-all hover:scale-[1.03] active:scale-[0.97] w-fit self-center"
             >
-              <span className="px-2">Start Learning</span> <ChevronRight size={20} />
+              <span className="px-2">Student Login</span> <ChevronRight size={20} />
             </button>
           </motion.div>
 
@@ -367,10 +359,9 @@ export default function LandingPage() {
 
             <ul className="space-y-7 w-full">
               {[
-                "Structured Multi-chapter Course Creator",
-  
-              "Fair Revenue Sharing & Instant Payouts",
-                "Granular attendance and performance analytics",
+                "Create student login credentials",
+                "Run live classes with whiteboard and slides",
+                "Publish tests and study materials",
               ].map((item) => (
                 <li key={item} className="flex items-center gap-5 text-gray-300 text-lg">
                   <span className="flex-shrink-0 w-7 h-7 rounded-full bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center">
@@ -409,10 +400,10 @@ export default function LandingPage() {
 
               <div className="flex flex-col sm:flex-row justify-center items-center gap-6 md:gap-10 w-full">
               <button
-                onClick={() => openAuth('signup', 'student')}
+                onClick={() => openAuth('login')}
                 className="inline-flex min-h-[64px] min-w-[210px] items-center justify-center gap-5 bg-green-500 hover:bg-green-600 text-black px-12 py-5 rounded-full font-extrabold text-sm uppercase tracking-wide transition-all hover:scale-105 active:scale-95"
               >
-                <span className="px-2">Student Sign Up</span> <ArrowRight size={18} />
+                <span className="px-2">Student Login</span> <ArrowRight size={18} />
               </button>
 
               <button
@@ -471,7 +462,7 @@ export default function LandingPage() {
                   onClick={() => { setActiveTab('signup'); setAuthError(''); }}
                   className={`auth-tab-btn ${activeTab === 'signup' ? 'active' : ''}`}
                 >
-                  Sign Up
+                  Teacher Sign Up
                 </button>
               </div>
 
@@ -540,7 +531,7 @@ export default function LandingPage() {
                   </div>
                 </div>
 
-                {activeTab === 'signup' && (
+                {false && activeTab === 'signup' && (
                   <div className="auth-input-group">
                     <label className="auth-label">Register As</label>
                     <div className="auth-role-container">
@@ -570,22 +561,22 @@ export default function LandingPage() {
                   className="auth-submit-btn"
                   style={{ opacity: submitting ? 0.6 : 1 }}
                 >
-                  {submitting ? 'Please wait...' : activeTab === 'login' ? 'Sign In' : 'Create Account'}
+                  {submitting ? 'Please wait...' : activeTab === 'login' ? 'Sign In' : 'Create Teacher Account'}
                 </button>
 
                 <div className="auth-google-row">
                   <button
                     type="button"
-                    onClick={() => handleGoogleLoginClick('student')}
+                    onClick={handleGoogleLoginClick}
                     disabled={submitting || loadingRole !== null}
                     className="auth-google-btn"
-                    style={{ opacity: loadingRole === 'student' ? 0.6 : 1 }}
+                    style={{ display: 'none' }}
                   >
                     <span>👩‍🎓 Google</span>
                   </button>
                   <button
                     type="button"
-                    onClick={() => handleGoogleLoginClick('teacher')}
+                    onClick={handleGoogleLoginClick}
                     disabled={submitting || loadingRole !== null}
                     className="auth-google-btn"
                     style={{ opacity: loadingRole === 'teacher' ? 0.6 : 1 }}

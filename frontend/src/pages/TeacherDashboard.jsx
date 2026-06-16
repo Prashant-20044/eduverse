@@ -25,9 +25,13 @@ const TeacherDashboard = () => {
   const navigate = useNavigate();
   const [classes, setClasses] = useState([]);
   const [tests, setTests] = useState([]);
+  const [students, setStudents] = useState([]);
   const [topic, setTopic] = useState('');
   const [description, setDescription] = useState('');
   const [scheduledAt, setScheduledAt] = useState(getDefaultScheduleTime);
+  const [studentName, setStudentName] = useState('');
+  const [studentEmail, setStudentEmail] = useState('');
+  const [studentPassword, setStudentPassword] = useState('');
   const [testTitle, setTestTitle] = useState('');
   const [testDescription, setTestDescription] = useState('');
   const [durationMinutes, setDurationMinutes] = useState(30);
@@ -35,6 +39,7 @@ const TeacherDashboard = () => {
   const [answerKeyFile, setAnswerKeyFile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [savingStudent, setSavingStudent] = useState(false);
   const [savingTest, setSavingTest] = useState(false);
   const [startingNow, setStartingNow] = useState(false);
   const [startingClassId, setStartingClassId] = useState(null);
@@ -42,9 +47,12 @@ const TeacherDashboard = () => {
   const [uploadClassId, setUploadClassId] = useState('');
   const [uploadFile, setUploadFile] = useState(null);
   const [uploadingMaterial, setUploadingMaterial] = useState(false);
+  const [deletingMaterialId, setDeletingMaterialId] = useState(null);
   const [uploadSuccess, setUploadSuccess] = useState('');
   const [uploadError, setUploadError] = useState('');
+  const [studentSuccess, setStudentSuccess] = useState('');
   const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [showStudentModal, setShowStudentModal] = useState(false);
   const [showTestModal, setShowTestModal] = useState(false);
 
   const upcomingClasses = useMemo(() => {
@@ -64,15 +72,19 @@ const TeacherDashboard = () => {
 
     const fetchDashboardData = async () => {
       try {
-        const [classesRes, testsRes] = await Promise.all([
+        const [classesRes, testsRes, studentsRes] = await Promise.all([
           axios.get(`${API_URL}/classes/teacher`),
           axios.get(`${API_URL}/tests/teacher`),
+          axios.get(`${API_URL}/auth/students`),
         ]);
         if (classesRes.data.success) {
           setClasses(classesRes.data.classes);
         }
         if (testsRes.data.success) {
           setTests(testsRes.data.tests);
+        }
+        if (studentsRes.data.success) {
+          setStudents(studentsRes.data.students);
         }
       } catch (err) {
         setError(err.response?.data?.message || 'Could not load your dashboard.');
@@ -177,6 +189,39 @@ const TeacherDashboard = () => {
     }
   };
 
+  const handleCreateStudent = async (event) => {
+    event.preventDefault();
+    if (!studentName.trim() || !studentEmail.trim() || !studentPassword.trim()) {
+      setError('Please enter student name, email, and password.');
+      return;
+    }
+
+    setSavingStudent(true);
+    setError('');
+    setStudentSuccess('');
+
+    try {
+      const res = await axios.post(`${API_URL}/auth/students`, {
+        name: studentName,
+        email: studentEmail,
+        password: studentPassword,
+      });
+
+      if (res.data.success) {
+        setStudents((current) => [res.data.student, ...current]);
+        setStudentSuccess(`Student created. Share login: ${studentEmail.trim().toLowerCase()} / ${studentPassword}`);
+        setStudentName('');
+        setStudentEmail('');
+        setStudentPassword('');
+        setShowStudentModal(false);
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'Could not create student.');
+    } finally {
+      setSavingStudent(false);
+    }
+  };
+
   const handleCreateTest = async (event) => {
     event.preventDefault();
     if (!testTitle.trim()) {
@@ -236,6 +281,11 @@ const TeacherDashboard = () => {
       const res = await axios.post(`${API_URL}/upload/material/${uploadClassId}`, formData);
       if (res.data.success) {
         setUploadSuccess(`✅ "${res.data.material.filename}" uploaded successfully! Students can now access it.`);
+        setClasses((current) => current.map((classItem) => (
+          classItem._id === uploadClassId
+            ? { ...classItem, materials: [...(classItem.materials || []), res.data.material] }
+            : classItem
+        )));
         setUploadFile(null);
         setUploadClassId('');
         event.target.reset();
@@ -244,6 +294,33 @@ const TeacherDashboard = () => {
       setUploadError(err.response?.data?.message || 'Upload failed.');
     } finally {
       setUploadingMaterial(false);
+    }
+  };
+
+  const handleDeleteMaterial = async (classId, material) => {
+    if (!classId || !material?._id || deletingMaterialId) return;
+
+    setDeletingMaterialId(material._id);
+    setUploadError('');
+    setUploadSuccess('');
+
+    try {
+      const res = await axios.delete(`${API_URL}/upload/material/${classId}/${material._id}`);
+      if (res.data.success) {
+        setClasses((current) => current.map((classItem) => (
+          classItem._id === classId
+            ? {
+              ...classItem,
+              materials: (classItem.materials || []).filter((item) => item._id !== material._id),
+            }
+            : classItem
+        )));
+        setUploadSuccess(`Deleted "${material.filename || 'material'}".`);
+      }
+    } catch (err) {
+      setUploadError(err.response?.data?.message || 'Could not delete material.');
+    } finally {
+      setDeletingMaterialId(null);
     }
   };
 
@@ -285,6 +362,53 @@ const TeacherDashboard = () => {
               <strong>{tests.length}</strong>
               <span>Tests</span>
             </div>
+            <div>
+              <strong>{students.length}</strong>
+              <span>Students</span>
+            </div>
+          </div>
+        </section>
+
+        <section className="tests-layout" style={{ gridTemplateColumns: '1fr' }}>
+          <div className="schedule-panel glass-panel">
+            <div className="section-heading">
+              <div>
+                <p className="eyebrow">Admissions</p>
+                <h2>Your students</h2>
+              </div>
+              <button className="btn-primary btn-sm" onClick={() => setShowStudentModal(true)}>
+                + Register Student
+              </button>
+            </div>
+
+            {studentSuccess && <div className="dashboard-success">{studentSuccess}</div>}
+
+            {loading ? (
+              <div className="empty-state compact">Loading students...</div>
+            ) : students.length === 0 ? (
+              <div className="empty-state compact">
+                <p>No students registered yet.</p>
+                <p className="text-muted">Create student login credentials after admission.</p>
+              </div>
+            ) : (
+              <div className="teacher-class-list">
+                {students.map((student) => (
+                  <article key={student.id || student._id} className="teacher-class-row student-row">
+                    <div className="class-time-block">
+                      <span>{formatSchedule(student.createdAt || new Date())}</span>
+                    </div>
+                    <div className="teacher-class-info">
+                      <div className="class-title-line">
+                        <h3>{student.name}</h3>
+                        <span className="status-chip">student</span>
+                      </div>
+                      <p>{student.email}</p>
+                    </div>
+                    <span className="text-muted">Credential login</span>
+                  </article>
+                ))}
+              </div>
+            )}
           </div>
         </section>
 
@@ -354,6 +478,7 @@ const TeacherDashboard = () => {
                 <p>Create a class first to upload materials.</p>
               </div>
             ) : (
+              <>
               <form onSubmit={handleUploadMaterial} className="class-form">
                 <div className="form-group">
                   <label>Select Class</label>
@@ -388,6 +513,32 @@ const TeacherDashboard = () => {
                   {uploadingMaterial ? 'Uploading...' : '📤 Upload to Class'}
                 </button>
               </form>
+              {classes.some((classItem) => classItem.materials?.length > 0) && (
+                <div className="teacher-materials-list">
+                  {classes.filter((classItem) => classItem.materials?.length > 0).map((classItem) => (
+                    <div key={classItem._id} className="teacher-materials-group">
+                      <h3>{classItem.topic}</h3>
+                      {(classItem.materials || []).map((material) => (
+                        <div key={material._id || material.publicId || material.url} className="teacher-material-row">
+                          <a href={material.url} target="_blank" rel="noreferrer">
+                            <span>{material.fileType?.toUpperCase() || 'FILE'}</span>
+                            {material.filename || 'Uploaded material'}
+                          </a>
+                          <button
+                            type="button"
+                            className="material-delete-btn"
+                            onClick={() => handleDeleteMaterial(classItem._id, material)}
+                            disabled={deletingMaterialId === material._id}
+                          >
+                            {deletingMaterialId === material._id ? 'Deleting...' : 'Delete'}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              )}
+              </>
             )}
           </div>
 
@@ -494,6 +645,57 @@ const TeacherDashboard = () => {
                 disabled={saving || startingNow}
               >
                 {startingNow ? 'Starting...' : 'Start Now'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Register Student Modal */}
+      {showStudentModal && (
+        <div className="dashboard-modal-overlay" onClick={() => setShowStudentModal(false)}>
+          <div className="dashboard-modal-container" onClick={e => e.stopPropagation()}>
+            <button className="dashboard-modal-close" onClick={() => setShowStudentModal(false)}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+            <p className="eyebrow">New student</p>
+            <h2 style={{ fontSize: '1.75rem', marginBottom: '1.5rem', fontWeight: '900' }}>Register student</h2>
+            <form onSubmit={handleCreateStudent} className="class-form">
+              <div className="form-group">
+                <label>Student name</label>
+                <input
+                  type="text"
+                  className="input-field"
+                  placeholder="e.g., Aarav Sharma"
+                  value={studentName}
+                  onChange={(event) => setStudentName(event.target.value)}
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Login email</label>
+                <input
+                  type="email"
+                  className="input-field"
+                  placeholder="student@example.com"
+                  value={studentEmail}
+                  onChange={(event) => setStudentEmail(event.target.value)}
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Temporary password</label>
+                <input
+                  type="text"
+                  className="input-field"
+                  placeholder="Minimum 6 characters"
+                  value={studentPassword}
+                  onChange={(event) => setStudentPassword(event.target.value)}
+                />
+              </div>
+
+              <button type="submit" className="btn-primary btn-full" disabled={savingStudent}>
+                {savingStudent ? 'Creating...' : 'Create Student Login'}
               </button>
             </form>
           </div>

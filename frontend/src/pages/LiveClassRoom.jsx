@@ -24,6 +24,7 @@ const LiveClassRoom = () => {
   const [isGeneratingNotes, setIsGeneratingNotes] = useState(false);
   const [materialsError, setMaterialsError] = useState('');
   const [uploadingPpt, setUploadingPpt] = useState(false);
+  const [deletingMaterialId, setDeletingMaterialId] = useState(null);
   const [pptFile, setPptFile] = useState(null);
   const [pptError, setPptError] = useState('');
   const [broadcastedPpt, setBroadcastedPpt] = useState(null);
@@ -91,15 +92,33 @@ const LiveClassRoom = () => {
 
     const handleMaterialSaved = (material) => {
       setClassMaterials((current) => {
-        if (current.some((item) => item.publicId === material.publicId || item.url === material.url)) {
+        if (current.some((item) => (
+          (material._id && item._id === material._id)
+          || (material.publicId && item.publicId === material.publicId)
+          || item.url === material.url
+        ))) {
           return current;
         }
         return [...current, material];
       });
     };
 
+    const handleMaterialDeleted = (material) => {
+      const isSameMaterial = (item) => (
+        (material._id && item._id === material._id)
+        || (material.publicId && item.publicId === material.publicId)
+        || (material.url && item.url === material.url)
+      );
+      setClassMaterials((current) => current.filter((item) => !isSameMaterial(item)));
+      setBroadcastedPpt((current) => {
+        if (!current) return current;
+        return isSameMaterial(current) ? null : current;
+      });
+    };
+
     socket.on('whiteboard-snapshot-saved', handleMaterialSaved);
     socket.on('whiteboard-notes-generated', handleMaterialSaved);
+    socket.on('class-material-deleted', handleMaterialDeleted);
 
     // Listen for PPT/PDF broadcast from teacher
     const handlePptBroadcast = (material) => {
@@ -125,14 +144,47 @@ const LiveClassRoom = () => {
     return () => {
       socket.off('whiteboard-snapshot-saved', handleMaterialSaved);
       socket.off('whiteboard-notes-generated', handleMaterialSaved);
+      socket.off('class-material-deleted', handleMaterialDeleted);
       socket.off('ppt-broadcasted', handlePptBroadcast);
       socket.off('ppt-broadcast-stopped', handlePptBroadcastStopped);
       socket.off('pdf-presentation-state', handlePdfPresentationState);
     };
   }, [socket]);
 
-  const handleSnapshotSaved = (material) => {
-    setClassMaterials((current) => [...current, material]);
+  const handleMaterialSaved = (material) => {
+    setClassMaterials((current) => {
+      if (current.some((item) => (
+        (material._id && item._id === material._id)
+        || (material.publicId && item.publicId === material.publicId)
+        || item.url === material.url
+      ))) {
+        return current;
+      }
+      return [...current, material];
+    });
+  };
+
+  const handleDeleteMaterial = async (material) => {
+    const materialId = material?._id;
+    if (!isTeacher || !materialId || deletingMaterialId) return;
+
+    setDeletingMaterialId(materialId);
+    setMaterialsError('');
+    setPptError('');
+
+    try {
+      const res = await axios.delete(`/api/upload/material/${classId}/${materialId}`);
+      if (res.data.success) {
+        const deletedMaterial = res.data.material;
+        setClassMaterials((current) => current.filter((item) => item._id !== materialId));
+        setBroadcastedPpt((current) => current?._id === materialId ? null : current);
+        socket?.emit('class-material-deleted', classId, deletedMaterial);
+      }
+    } catch (err) {
+      setMaterialsError(err.response?.data?.message || 'Could not delete material.');
+    } finally {
+      setDeletingMaterialId(null);
+    }
   };
 
   const handleGenerateNotesPdf = async () => {
@@ -145,7 +197,7 @@ const LiveClassRoom = () => {
       const res = await axios.post(`/api/upload/whiteboard-notes/${classId}`);
       if (res.data.success) {
         const material = res.data.material;
-        setClassMaterials((current) => [...current, material]);
+        handleMaterialSaved(material);
         socket?.emit('whiteboard-notes-generated', classId, material);
 
         // Auto-download the PDF in the teacher's browser
@@ -179,7 +231,7 @@ const LiveClassRoom = () => {
 
       if (res.data.success) {
         const material = res.data.material;
-        setClassMaterials((current) => [...current, material]);
+        handleMaterialSaved(material);
         presentMaterial(material);
         setPptFile(null);
         // Reset file input
@@ -284,7 +336,7 @@ const LiveClassRoom = () => {
                 onClick={handleGenerateNotesPdf}
                 disabled={isGeneratingNotes || whiteboardSnapshots.length === 0}
               >
-                {isGeneratingNotes ? 'Generating PDF...' : 'Save & Download PDF'}
+                {isGeneratingNotes ? 'Generating PDF...' : 'Combine Snapshots PDF'}
               </button>
             </>
           )}
@@ -354,7 +406,8 @@ const LiveClassRoom = () => {
               socket={socket}
               roomId={classId}
               isTeacher={isTeacher}
-              onSnapshotSaved={handleSnapshotSaved}
+              onSnapshotSaved={handleMaterialSaved}
+              onSaveNotesPdf={handleMaterialSaved}
             />
           )}
 
@@ -381,8 +434,8 @@ const LiveClassRoom = () => {
               {slideMaterials.length > 0 && (
                 <div className="notes-download-list" style={{ marginTop: 12 }}>
                   {slideMaterials.map((material, index) => (
+                    <div className="material-control-row" key={material._id || material.publicId || material.url || index}>
                     <button
-                      key={material.publicId || material.url || index}
                       type="button"
                       className="notes-download-link material-action-link"
                       onClick={() => presentMaterial(material)}
@@ -390,6 +443,16 @@ const LiveClassRoom = () => {
                       <span>{material.fileType?.toUpperCase() || 'FILE'}</span>
                       {material.filename || `Slides ${index + 1}`}
                     </button>
+                    <button
+                      type="button"
+                      className="material-delete-btn"
+                      onClick={() => handleDeleteMaterial(material)}
+                      disabled={deletingMaterialId === material._id}
+                      title="Delete material"
+                    >
+                      {deletingMaterialId === material._id ? 'Deleting...' : 'Delete'}
+                    </button>
+                    </div>
                   ))}
                 </div>
               )}
@@ -427,8 +490,8 @@ const LiveClassRoom = () => {
               {notesPdfs.length > 0 && (
                 <div className="notes-download-list">
                   {notesPdfs.map((material, index) => (
+                    <div className="material-control-row" key={material._id || material.publicId || material.url || index}>
                     <a
-                      key={material.publicId || material.url || index}
                       className="notes-download-link"
                       href={getViewerUrl(material) || material.url}
                       target="_blank"
@@ -437,13 +500,25 @@ const LiveClassRoom = () => {
                       <span>PDF</span>
                       {material.filename || `Whiteboard notes ${index + 1}`}
                     </a>
+                    {isTeacher && (
+                      <button
+                        type="button"
+                        className="material-delete-btn"
+                        onClick={() => handleDeleteMaterial(material)}
+                        disabled={deletingMaterialId === material._id}
+                        title="Delete notes"
+                      >
+                        {deletingMaterialId === material._id ? 'Deleting...' : 'Delete'}
+                      </button>
+                    )}
+                    </div>
                   ))}
                 </div>
               )}
               <div className="materials-list">
                 {whiteboardSnapshots.map((material, index) => (
+                  <div className="snapshot-control-card" key={material._id || material.publicId || material.url || index}>
                   <a
-                    key={material.publicId || material.url || index}
                     className="material-link"
                     href={material.url}
                     target="_blank"
@@ -452,6 +527,18 @@ const LiveClassRoom = () => {
                     <img src={material.url} alt={material.filename || `Whiteboard snapshot ${index + 1}`} />
                     <span>{material.filename || `Snapshot ${index + 1}`}</span>
                   </a>
+                  {isTeacher && (
+                    <button
+                      type="button"
+                      className="material-delete-btn snapshot-delete-btn"
+                      onClick={() => handleDeleteMaterial(material)}
+                      disabled={deletingMaterialId === material._id}
+                      title="Delete snapshot"
+                    >
+                      {deletingMaterialId === material._id ? 'Deleting...' : 'Delete'}
+                    </button>
+                  )}
+                  </div>
                 ))}
               </div>
             </section>

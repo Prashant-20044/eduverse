@@ -43,7 +43,7 @@ const TOOL_LABELS = {
   text: 'Text',
 };
 
-const Whiteboard = ({ socket, roomId, isTeacher, onSnapshotSaved }) => {
+const Whiteboard = ({ socket, roomId, isTeacher, onSnapshotSaved, onSaveNotesPdf }) => {
   const canvasRef = useRef(null);
   const scrollRef = useRef(null);
   const contextRef = useRef(null);
@@ -594,6 +594,34 @@ const Whiteboard = ({ socket, roomId, isTeacher, onSnapshotSaved }) => {
     }
   };
 
+  const handleSaveNotesPdf = async () => {
+    const canvas = canvasRef.current;
+    if (!canvas || !isTeacher || isSavingSnapshot) return;
+
+    setIsSavingSnapshot(true);
+    setSaveStatus('');
+
+    try {
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const filename = `whiteboard-notes-${roomId || 'class'}-${timestamp}.pdf`;
+      const res = await axios.post(`/api/upload/whiteboard-pdf/${roomId}`, {
+        imageData: canvas.toDataURL('image/png'),
+        filename,
+      });
+
+      if (res.data.success) {
+        setSaveStatus('Notes PDF saved');
+        onSaveNotesPdf?.(res.data.material);
+        socket?.emit('whiteboard-notes-generated', roomId, res.data.material);
+      }
+    } catch (err) {
+      setSaveStatus(err.response?.data?.message || 'PDF save failed');
+    } finally {
+      setIsSavingSnapshot(false);
+      window.setTimeout(() => setSaveStatus(''), 3000);
+    }
+  };
+
   const scrollBoard = (position) => {
     const scrollElement = scrollRef.current;
     if (!scrollElement) return;
@@ -866,6 +894,14 @@ const Whiteboard = ({ socket, roomId, isTeacher, onSnapshotSaved }) => {
               type="button"
             >
               <Camera size={14} /> {isSavingSnapshot ? 'Saving...' : 'Save Snap'}
+            </button>
+            <button
+              className="wb-action-btn text-btn"
+              onClick={handleSaveNotesPdf}
+              disabled={isSavingSnapshot}
+              type="button"
+            >
+              <Download size={14} /> Save Notes
             </button>
             <button
               className="wb-action-btn text-btn"

@@ -56,6 +56,10 @@ const StudentDashboard = () => {
     if (!socket) return undefined;
 
     const handleNotification = (data) => {
+      if (data.teacherId && user?.teacherId && data.teacherId !== user.teacherId) {
+        return;
+      }
+
       setActiveClasses((current) => {
         if (current.some((classItem) => classItem.classId === data.classId)) {
           return current;
@@ -69,7 +73,7 @@ const StudentDashboard = () => {
     return () => {
       socket.off('notification', handleNotification);
     };
-  }, [socket]);
+  }, [socket, user?.teacherId]);
 
   return (
     <div className="dashboard-container">

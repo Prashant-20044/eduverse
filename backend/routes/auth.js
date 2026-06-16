@@ -12,6 +12,23 @@ const generateToken = (user) => {
   return jwt.sign({ id: user._id, role: user.role }, process.env.SECRET_KEY || 'secret', { expiresIn: '7d' });
 };
 
+const serializeUser = (user) => ({
+  id: user._id,
+  name: user.name,
+  email: user.email,
+  role: user.role,
+  avatar: user.avatar,
+  teacherId: user.teacherId,
+  createdAt: user.createdAt,
+});
+
+const ensureTeacher = (req, res, next) => {
+  if (req.user?.role !== 'teacher') {
+    return res.status(403).json({ success: false, message: 'Teacher access required' });
+  }
+  next();
+};
+
 // @route POST /api/auth/google
 // @desc Authenticate with Google
 router.post('/google', async (req, res) => {
@@ -44,6 +61,13 @@ router.post('/google', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Google profile is missing an email' });
     }
 
+    if (role && role !== 'teacher') {
+      return res.status(403).json({
+        success: false,
+        message: 'Student accounts are created by teachers. Please use the credentials from your coaching.',
+      });
+    }
+
     // Check if user exists
     let user = await User.findOne({ email });
 
@@ -52,13 +76,20 @@ router.post('/google', async (req, res) => {
       user = new User({
         name,
         email,
-        role: role || 'student', // Default to student if not provided
+        role: 'teacher',
         oauthId: sub || 'mock_sub',
         avatar: picture
       });
       await user.save();
     } else {
-      const requestedRole = ['teacher', 'student'].includes(role) ? role : user.role;
+      if (user.role === 'student') {
+        return res.status(403).json({
+          success: false,
+          message: 'Student accounts must use the credentials provided by their coaching.',
+        });
+      }
+
+      const requestedRole = role === 'teacher' ? 'teacher' : user.role;
 
       // Preserve the user's custom name if they signed up with email/password.
       // Only pull the name from Google for pure OAuth accounts (no password set).
@@ -83,13 +114,7 @@ router.post('/google', async (req, res) => {
     res.json({
       success: true,
       token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        avatar: user.avatar
-      }
+      user: serializeUser(user)
     });
 
   } catch (err) {
@@ -99,18 +124,16 @@ router.post('/google', async (req, res) => {
 });
 
 // @route POST /api/auth/signup
-// @desc Register custom user with email and password
+// @desc Register a teacher account with email and password
 router.post('/signup', async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, password } = req.body;
     const normalizedEmail = email?.trim().toLowerCase();
     const trimmedName = name?.trim();
 
     if (!trimmedName || !normalizedEmail || !password) {
       return res.status(400).json({ success: false, message: 'Please provide all required fields' });
     }
-
-    const requestedRole = ['teacher', 'student'].includes(role) ? role : 'student';
 
     // Check if user already exists
     let user = await User.findOne({ email: normalizedEmail });
@@ -123,7 +146,8 @@ router.post('/signup', async (req, res) => {
       const salt = await bcrypt.genSalt(10);
       user.password = await bcrypt.hash(password, salt);
       user.name = trimmedName;
-      user.role = requestedRole;
+      user.role = 'teacher';
+      user.teacherId = null;
       await user.save();
 
       const token = generateToken(user);
@@ -131,13 +155,7 @@ router.post('/signup', async (req, res) => {
       return res.status(200).json({
         success: true,
         token,
-        user: {
-          id: user._id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          avatar: user.avatar
-        }
+        user: serializeUser(user)
       });
     }
 
@@ -150,7 +168,8 @@ router.post('/signup', async (req, res) => {
       name: trimmedName,
       email: normalizedEmail,
       password: hashedPassword,
-      role: requestedRole
+      role: 'teacher',
+      teacherId: null,
     });
 
     await user.save();
@@ -161,13 +180,7 @@ router.post('/signup', async (req, res) => {
     res.status(201).json({
       success: true,
       token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        avatar: user.avatar
-      }
+      user: serializeUser(user)
     });
   } catch (err) {
     console.error('Signup error:', err);
@@ -212,13 +225,7 @@ router.post('/login', async (req, res) => {
     res.json({
       success: true,
       token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        avatar: user.avatar
-      }
+      user: serializeUser(user)
     });
   } catch (err) {
     console.error('Login error:', err);
@@ -247,7 +254,57 @@ const protect = async (req, res, next) => {
 };
 
 router.get('/me', protect, (req, res) => {
-  res.json({ success: true, user: req.user });
+  res.json({ success: true, user: serializeUser(req.user) });
+});
+
+router.get('/students', protect, ensureTeacher, async (req, res) => {
+  try {
+    const students = await User.find({ role: 'student', teacherId: req.user._id })
+      .select('-password')
+      .sort({ createdAt: -1 });
+
+    res.json({ success: true, students: students.map(serializeUser) });
+  } catch (err) {
+    console.error('Fetch students error:', err);
+    res.status(500).json({ success: false, message: 'Could not fetch students' });
+  }
+});
+
+router.post('/students', protect, ensureTeacher, async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+    const normalizedEmail = email?.trim().toLowerCase();
+    const trimmedName = name?.trim();
+
+    if (!trimmedName || !normalizedEmail || !password) {
+      return res.status(400).json({ success: false, message: 'Please provide student name, email, and password' });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ success: false, message: 'Student password must be at least 6 characters' });
+    }
+
+    const existingUser = await User.findOne({ email: normalizedEmail });
+    if (existingUser) {
+      return res.status(400).json({ success: false, message: 'A user with this email already exists' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const student = await User.create({
+      name: trimmedName,
+      email: normalizedEmail,
+      password: hashedPassword,
+      role: 'student',
+      teacherId: req.user._id,
+    });
+
+    res.status(201).json({ success: true, student: serializeUser(student) });
+  } catch (err) {
+    console.error('Create student error:', err);
+    res.status(500).json({ success: false, message: 'Could not create student' });
+  }
 });
 
 module.exports = router;

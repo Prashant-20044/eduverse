@@ -39,7 +39,15 @@ router.get('/teacher', protect, ensureTeacher, async (req, res) => {
 router.get('/live', protect, async (req, res) => {
   try {
     await cleanupExpiredClasses();
-    const classes = await Class.find({ status: 'live' })
+    const query = { status: 'live' };
+    if (req.user.role === 'student') {
+      if (!req.user.teacherId) {
+        return res.json({ success: true, classes: [] });
+      }
+      query.teacherId = req.user.teacherId;
+    }
+
+    const classes = await Class.find(query)
       .populate('teacherId', 'name avatar')
       .sort({ updatedAt: -1 });
 
@@ -52,8 +60,15 @@ router.get('/live', protect, async (req, res) => {
 
 router.get('/materials/all', protect, async (req, res) => {
   try {
-    // Fetch all classes that have materials
-    const classes = await Class.find({ materials: { $exists: true, $ne: [] } })
+    const query = { materials: { $exists: true, $ne: [] } };
+    if (req.user.role === 'student') {
+      if (!req.user.teacherId) {
+        return res.json({ success: true, classes: [] });
+      }
+      query.teacherId = req.user.teacherId;
+    }
+
+    const classes = await Class.find(query)
       .populate('teacherId', 'name avatar')
       .sort({ updatedAt: -1 });
 
@@ -71,6 +86,10 @@ router.get('/:classId', protect, async (req, res) => {
 
     if (!classObj) {
       return res.status(404).json({ success: false, message: 'Class not found' });
+    }
+
+    if (req.user.role === 'student' && classObj.teacherId?._id?.toString() !== req.user.teacherId?.toString()) {
+      return res.status(403).json({ success: false, message: 'You are not enrolled in this coaching' });
     }
 
     res.json({ success: true, class: classObj });

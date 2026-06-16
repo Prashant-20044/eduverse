@@ -144,6 +144,12 @@ const createWhiteboardPdf = (imageData, title) => new Promise((resolve, reject) 
   }
 });
 
+const getCloudinaryResourceType = (fileType = '') => {
+  if (fileType === 'whiteboard-snapshot' || fileType === 'image') return 'image';
+  if (fileType === 'pdf' || fileType === 'ppt' || fileType === 'whiteboard-notes-pdf' || fileType === 'raw') return 'raw';
+  return 'auto';
+};
+
 // @route POST /api/upload/material/:classId
 // @desc Upload a material (PPT/PDF/Image) for a specific class
 router.post('/material/:classId', protect, upload.single('file'), async (req, res) => {
@@ -155,6 +161,10 @@ router.post('/material/:classId', protect, upload.single('file'), async (req, re
     const classObj = await Class.findById(req.params.classId);
     if (!classObj) {
       return res.status(404).json({ success: false, message: 'Class not found' });
+    }
+
+    if (classObj.teacherId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ success: false, message: 'You can only upload materials for your own classes' });
     }
 
     if (!req.file) {
@@ -188,6 +198,49 @@ router.post('/material/:classId', protect, upload.single('file'), async (req, re
     console.error('Upload error:', err && err.stack ? err.stack : err);
     // Return error message for easier debugging during development
     res.status(500).json({ success: false, message: 'Upload failed', error: err && err.message ? err.message : String(err) });
+  }
+});
+
+// @route DELETE /api/upload/material/:classId/:materialId
+// @desc Delete an uploaded material/notes file from a teacher-owned class
+router.delete('/material/:classId/:materialId', protect, async (req, res) => {
+  try {
+    if (req.user.role !== 'teacher') {
+      return res.status(403).json({ success: false, message: 'Only teachers can delete materials' });
+    }
+
+    const classObj = await Class.findById(req.params.classId);
+    if (!classObj) {
+      return res.status(404).json({ success: false, message: 'Class not found' });
+    }
+
+    if (classObj.teacherId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ success: false, message: 'You can only delete materials from your own classes' });
+    }
+
+    const material = classObj.materials.id(req.params.materialId);
+    if (!material) {
+      return res.status(404).json({ success: false, message: 'Material not found' });
+    }
+
+    const deletedMaterial = material.toObject();
+    material.deleteOne();
+    await classObj.save();
+
+    if (deletedMaterial.publicId) {
+      try {
+        await cloudinary.uploader.destroy(deletedMaterial.publicId, {
+          resource_type: getCloudinaryResourceType(deletedMaterial.fileType),
+        });
+      } catch (cloudinaryErr) {
+        console.warn('Cloudinary material delete warning:', cloudinaryErr.message || cloudinaryErr);
+      }
+    }
+
+    res.json({ success: true, material: deletedMaterial, class: classObj });
+  } catch (err) {
+    console.error('Delete material error:', err);
+    res.status(500).json({ success: false, message: 'Could not delete material' });
   }
 });
 

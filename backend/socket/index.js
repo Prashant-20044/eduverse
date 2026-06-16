@@ -137,6 +137,21 @@ module.exports = (io) => {
       socket.to(roomId).emit('whiteboard-notes-generated', material);
     });
 
+    socket.on('class-material-deleted', (roomId, material) => {
+      const activeBroadcast = activeBroadcasts.get(roomId);
+      const isActiveBroadcast = activeBroadcast
+        && (
+          (material?._id && activeBroadcast._id === material._id)
+          || (material?.publicId && activeBroadcast.publicId === material.publicId)
+          || (material?.url && activeBroadcast.url === material.url)
+        );
+      if (isActiveBroadcast) {
+        activeBroadcasts.delete(roomId);
+        socket.to(roomId).emit('ppt-broadcast-stopped');
+      }
+      socket.to(roomId).emit('class-material-deleted', material);
+    });
+
     // --- PPT/PDF Broadcast ---
     socket.on('ppt-broadcast', (roomId, material) => {
       console.log(`ppt-broadcast event in room ${roomId}: ${material?.filename}`);
@@ -179,6 +194,7 @@ module.exports = (io) => {
         message: `${classData.teacherName} started streaming: ${classData.topic}`,
         classId,
         topic: classData.topic,
+        teacherId: classData.teacherId,
         teacherName: classData.teacherName
       });
     });

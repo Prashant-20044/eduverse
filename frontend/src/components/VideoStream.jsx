@@ -104,7 +104,7 @@ const VideoStream = ({ socket, roomId, isTeacher, user, topic = 'Live Class' }) 
           socket.emit('join-room', roomId, user?.id, user?.name, user?.role);
           
           // Broadcast that stream has started so dashboards update
-          socket.emit('stream-started', { classId: roomId, teacherName: user?.name, topic });
+          socket.emit('stream-started', { classId: roomId, teacherId: user?.id, teacherName: user?.name, topic });
 
         } catch (err) {
           setError(err.message || 'Camera/Microphone permission denied.');
