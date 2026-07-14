@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { OAuth2Client } = require('google-auth-library');
 const User = require('../models/User');
+const { authLimiter } = require('../middleware/rateLimiter');
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID || 'dummy_client_id');
 
@@ -125,7 +126,8 @@ router.post('/google', async (req, res) => {
 
 // @route POST /api/auth/signup
 // @desc Register a teacher account with email and password
-router.post('/signup', async (req, res) => {
+// Add strict rate limiting to prevent brute force password guessing
+router.post('/signup', authLimiter, async (req, res) => {
   try {
     const { name, email, password } = req.body;
     const normalizedEmail = email?.trim().toLowerCase();
@@ -190,7 +192,7 @@ router.post('/signup', async (req, res) => {
 
 // @route POST /api/auth/login
 // @desc Authenticate custom user with email and password
-router.post('/login', async (req, res) => {
+router.post('/login', authLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
     const normalizedEmail = email?.trim().toLowerCase();

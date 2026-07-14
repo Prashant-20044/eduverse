@@ -43,6 +43,11 @@ const io = new Server(server, {
 
 require('./socket')(io); // Setup socket handlers
 
+const { apiLimiter } = require('./middleware/rateLimiter');
+
+// Apply global API rate limit
+app.use('/api', apiLimiter);
+
 // API Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/classes', require('./routes/classes'));
