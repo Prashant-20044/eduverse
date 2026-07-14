@@ -5,6 +5,8 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const { Server } = require('socket.io');
+const { initRedis, getRedisClient } = require('./redisClient');
+const { createAdapter } = require('@socket.io/redis-adapter');
 
 dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
@@ -58,8 +60,18 @@ app.get(/.*/, (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 
-mongoose.connect(process.env.CONNECTION_STRING).then(() => {
+mongoose.connect(process.env.CONNECTION_STRING).then(async () => {
   console.log('Connected to MongoDB');
+  
+  await initRedis();
+  const pubClient = getRedisClient();
+  if (pubClient) {
+    const subClient = pubClient.duplicate();
+    await subClient.connect();
+    io.adapter(createAdapter(pubClient, subClient));
+    console.log('Socket.IO Redis Adapter initialized');
+  }
+  
   server.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
   });

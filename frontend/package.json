@@ -10,11 +10,14 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@livekit/components-react": "^2.9.23",
+    "@livekit/components-styles": "^1.2.0",
     "@react-oauth/google": "^0.13.5",
     "axios": "^1.16.1",
     "framer-motion": "^12.40.0",
     "hls.js": "^1.6.16",
     "jwt-decode": "^4.0.0",
+    "livekit-client": "^2.20.1",
     "lucide-react": "^1.17.0",
     "pdfjs-dist": "^6.0.227",
     "react": "^19.2.6",

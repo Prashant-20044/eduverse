@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const Class = require('../models/Class');
 const { protect } = require('./auth');
+const { AccessToken } = require('livekit-server-sdk');
+const { cacheMiddleware, invalidateCache } = require('../middleware/cache');
 
 const ensureTeacher = (req, res, next) => {
   if (req.user?.role !== 'teacher') {
@@ -36,7 +38,7 @@ router.get('/teacher', protect, ensureTeacher, async (req, res) => {
   }
 });
 
-router.get('/live', protect, async (req, res) => {
+router.get('/live', protect, cacheMiddleware('live_classes'), async (req, res) => {
   try {
     await cleanupExpiredClasses();
     const query = { status: 'live' };
@@ -58,7 +60,7 @@ router.get('/live', protect, async (req, res) => {
   }
 });
 
-router.get('/materials/all', protect, async (req, res) => {
+router.get('/materials/all', protect, cacheMiddleware('materials'), async (req, res) => {
   try {
     const query = { materials: { $exists: true, $ne: [] } };
     if (req.user.role === 'student') {
@@ -121,6 +123,10 @@ router.post('/', protect, ensureTeacher, async (req, res) => {
       status: 'scheduled',
     });
 
+    // Invalidate live/materials cache
+    await invalidateCache('live_classes');
+    await invalidateCache('materials');
+
     res.status(201).json({ success: true, class: classObj });
   } catch (err) {
     console.error('Create class error:', err);
@@ -141,6 +147,8 @@ router.patch('/:classId/start', protect, ensureTeacher, async (req, res) => {
 
     classObj.status = 'live';
     await classObj.save();
+
+    await invalidateCache('live_classes');
 
     res.json({ success: true, class: classObj });
   } catch (err) {
@@ -163,10 +171,54 @@ router.patch('/:classId/end', protect, ensureTeacher, async (req, res) => {
     classObj.status = 'ended';
     await classObj.save();
 
+    await invalidateCache('live_classes');
+
     res.json({ success: true, class: classObj });
   } catch (err) {
     console.error('End class error:', err);
     res.status(500).json({ success: false, message: 'Could not end class' });
+  }
+});
+
+router.get('/:classId/livekit-token', protect, async (req, res) => {
+  try {
+    const classObj = await Class.findById(req.params.classId);
+    if (!classObj) return res.status(404).json({ success: false, message: 'Class not found' });
+
+    if (req.user.role === 'student' && classObj.teacherId?.toString() !== req.user.teacherId?.toString()) {
+      return res.status(403).json({ success: false, message: 'You are not enrolled in this coaching' });
+    }
+
+    const roomName = classObj._id.toString();
+    const participantName = req.user.name || req.user.email;
+    const isTeacher = req.user.role === 'teacher';
+
+    const at = new AccessToken(
+      process.env.LIVEKIT_API_KEY,
+      process.env.LIVEKIT_API_SECRET,
+      {
+        identity: req.user._id.toString(),
+        name: participantName,
+      }
+    );
+    
+    at.addGrant({ 
+        roomJoin: true, 
+        room: roomName,
+        canPublish: isTeacher,
+        canPublishData: true,
+        canSubscribe: true 
+    });
+
+    const token = await at.toJwt();
+    res.json({ 
+        success: true, 
+        token,
+        serverUrl: process.env.LIVEKIT_URL 
+    });
+  } catch (err) {
+    console.error('LiveKit token error:', err);
+    res.status(500).json({ success: false, message: 'Could not generate LiveKit token' });
   }
 });
 
