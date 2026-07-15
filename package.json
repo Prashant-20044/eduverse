@@ -4,7 +4,7 @@
   "description": "Full-stack online coaching platform",
   "scripts": {
     "postinstall": "cd backend && npm install && cd ../frontend && npm install",
-    "build": "npm install && cd frontend && npm install && npm run build",
+    "build": "npm --prefix frontend run build",
     "start": "cd backend && npm start",
     "dev": "concurrently \"npm --prefix backend run dev\" \"npm --prefix frontend run dev\""
   },
