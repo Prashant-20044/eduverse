@@ -12,16 +12,19 @@ const apiLimiter = rateLimit({
     success: false,
     message: 'Too many requests from this IP, please try again after 15 minutes.'
   },
-  store: new RedisStore({
-    // @ts-expect-error - Known issue with rate-limit-redis typings for node-redis v4
-    sendCommand: (...args) => {
-      const redisClient = getRedisClient();
-      if (redisClient) {
-        return redisClient.sendCommand(args);
-      }
-      return Promise.reject(new Error('Redis not connected'));
-    },
-  }),
+  // store: new RedisStore({
+  //   prefix: 'rl:api:',
+  //   // @ts-expect-error
+  //   sendCommand: (...args) => {
+  //     const redisClient = getRedisClient();
+  //     if (redisClient) {
+  //       // node-redis v4 requires all arguments to be strings
+  //       const stringArgs = args.map(String);
+  //       return redisClient.sendCommand(stringArgs);
+  //     }
+  //     return Promise.reject(new Error('Redis not connected'));
+  //   },
+  // }),
 });
 
 // Strict Auth Rate Limiter (prevents brute force password attacks)
@@ -34,16 +37,19 @@ const authLimiter = rateLimit({
     success: false,
     message: 'Too many login attempts from this IP, please try again after 15 minutes.'
   },
-  store: new RedisStore({
-    // @ts-expect-error
-    sendCommand: (...args) => {
-      const redisClient = getRedisClient();
-      if (redisClient) {
-        return redisClient.sendCommand(args);
-      }
-      return Promise.reject(new Error('Redis not connected'));
-    },
-  }),
+  // store: new RedisStore({
+  //   prefix: 'rl:auth:',
+  //   // @ts-expect-error
+  //   sendCommand: (...args) => {
+  //     const redisClient = getRedisClient();
+  //     if (redisClient) {
+  //       // node-redis v4 requires all arguments to be strings
+  //       const stringArgs = args.map(String);
+  //       return redisClient.sendCommand(stringArgs);
+  //     }
+  //     return Promise.reject(new Error('Redis not connected'));
+  //   },
+  // }),
 });
 
 module.exports = { apiLimiter, authLimiter };

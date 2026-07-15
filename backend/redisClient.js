@@ -1,29 +1,60 @@
 const { createClient } = require('redis');
 
 let redisClient = null;
+let redisConnectPromise = null;
 
 const initRedis = async () => {
-  if (!process.env.REDIS_URL) {
-    console.warn('REDIS_URL is not defined in .env. Redis caching and pub/sub will be disabled.');
+  const redisUrl = process.env.REDIS_URL || process.env.REDIS_URL_DISABLED;
+
+  if (!redisUrl) {
+    console.warn('No Redis URL is defined in .env. Redis caching and pub/sub will be disabled.');
     return null;
   }
 
-  try {
+  if (!redisClient) {
     redisClient = createClient({
-      url: process.env.REDIS_URL,
+      url: redisUrl,
+      socket: {
+        family: 4,
+        connectTimeout: 5000,
+        reconnectStrategy: (retries) => {
+          if (retries > 5) {
+            return false;
+          }
+
+          return Math.min(retries * 100, 3000);
+        },
+      },
     });
 
     redisClient.on('error', (err) => console.error('Redis Client Error:', err));
     redisClient.on('connect', () => console.log('Connected to Redis'));
-
-    await redisClient.connect();
-    return redisClient;
-  } catch (error) {
-    console.error('Failed to connect to Redis:', error);
-    return null;
+    redisClient.on('ready', () => console.log('Redis is ready'));
   }
+
+  if (redisClient.isReady) {
+    return redisClient;
+  }
+
+  if (!redisConnectPromise) {
+    redisConnectPromise = redisClient.connect()
+      .then(() => redisClient)
+      .catch((error) => {
+        console.error('Failed to connect to Redis:', error);
+        redisConnectPromise = null;
+        return null;
+      });
+  }
+
+  return redisConnectPromise;
 };
 
-const getRedisClient = () => redisClient;
+const getRedisClient = () => {
+  if (!redisClient || !redisClient.isReady) {
+    return null;
+  }
+
+  return redisClient;
+};
 
 module.exports = { initRedis, getRedisClient };
