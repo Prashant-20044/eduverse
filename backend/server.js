@@ -101,8 +101,10 @@ const frontendDistPath = path.join(__dirname, '..', 'frontend', 'dist');
 // Asset logger + explicit asset handler to surface missing-file errors in deployments
 app.use('/assets', (req, res, next) => {
   try {
-    const assetRelPath = req.path;
-    const assetFullPath = path.join(frontendDistPath, assetRelPath);
+    // req.path here is the path _after_ the mounted '/assets' prefix, e.g. '/index-FZNJgICD.css'
+    const rel = req.path.replace(/^\/+/, ''); // 'index-FZNJgICD.css'
+    // Built Vite assets live under frontend/dist/assets
+    const assetFullPath = path.join(frontendDistPath, 'assets', rel);
     console.log(`[assets] ${req.method} ${req.originalUrl} -> ${assetFullPath}`);
 
     if (!fs.existsSync(assetFullPath)) {
