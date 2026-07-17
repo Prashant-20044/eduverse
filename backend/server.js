@@ -98,6 +98,30 @@ app.use('/api/redis', require('./routes/redisTest'));
 
 // --- Serve frontend static files ---
 const frontendDistPath = path.join(__dirname, '..', 'frontend', 'dist');
+// Asset logger + explicit asset handler to surface missing-file errors in deployments
+app.use('/assets', (req, res, next) => {
+  try {
+    const assetRelPath = req.path;
+    const assetFullPath = path.join(frontendDistPath, assetRelPath);
+    console.log(`[assets] ${req.method} ${req.originalUrl} -> ${assetFullPath}`);
+
+    if (!fs.existsSync(assetFullPath)) {
+      console.error(`[assets] NOT FOUND: ${assetFullPath}`);
+      return res.status(404).end();
+    }
+
+    return res.sendFile(assetFullPath, (err) => {
+      if (err) {
+        console.error(`[assets] sendFile error for ${assetFullPath}:`, err);
+        if (!res.headersSent) res.status(500).end();
+      }
+    });
+  } catch (err) {
+    console.error('[assets] handler error:', err);
+    return next(err);
+  }
+});
+
 if (fs.existsSync(frontendDistPath)) {
   app.use(express.static(frontendDistPath, {
     etag: false,
@@ -150,4 +174,11 @@ mongoose.connect(process.env.CONNECTION_STRING).then(async () => {
 // Always start the server for testing even if MongoDB fails
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+});
+
+// Generic error handler (logs and returns JSON)
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err && err.stack ? err.stack : err);
+  if (res.headersSent) return next(err);
+  res.status(err?.status || 500).json({ success: false, message: err?.message || 'Internal Server Error' });
 });
