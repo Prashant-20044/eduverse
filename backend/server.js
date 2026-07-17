@@ -1,6 +1,7 @@
 const express = require('express');
 const http = require('http');
 const path = require('path');
+const fs = require('fs');
 const dotenv = require('dotenv');
 
 // Load env before other requires
@@ -97,17 +98,33 @@ app.use('/api/redis', require('./routes/redisTest'));
 
 // --- Serve frontend static files ---
 const frontendDistPath = path.join(__dirname, '..', 'frontend', 'dist');
-app.use(express.static(frontendDistPath, {
-  etag: false,
-  lastModified: false,
-  setHeaders: (res) => {
-    res.setHeader('Cache-Control', 'no-store');
-  },
-}));
+if (fs.existsSync(frontendDistPath)) {
+  app.use(express.static(frontendDistPath, {
+    etag: false,
+    lastModified: false,
+    setHeaders: (res) => {
+      res.setHeader('Cache-Control', 'no-store');
+    },
+  }));
+} else {
+  console.warn(`Warning: frontend dist not found at ${frontendDistPath}. Static asset serving is disabled.`);
+}
 
-// Catch-all: send index.html for any non-API route (SPA client-side routing)
-app.get(/.*/, (req, res) => {
-  res.sendFile(path.join(frontendDistPath, 'index.html'));
+// Catch-all: send index.html for SPA client-side routing, but only for HTML requests.
+app.get(/.*/, (req, res, next) => {
+  // If the client doesn't accept HTML (likely an asset request), return 404.
+  if (!req.accepts || !req.accepts('html')) {
+    return res.status(404).end();
+  }
+
+  const indexPath = path.join(frontendDistPath, 'index.html');
+  res.sendFile(indexPath, (err) => {
+    if (err) {
+      console.error('Error sending index.html:', err);
+      // Don't accidentally send HTML for missing assets — forward to next handler.
+      return next();
+    }
+  });
 });
 
 const PORT = process.env.PORT || 5000;
